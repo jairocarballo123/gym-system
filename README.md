@@ -38,3 +38,7 @@ Para ejecutar este sistema, asegúrate de tener instalado:
 ```bash
 git clone https://github.com/jairocarballo123/gym-system.git
 cd gym-system
+
+
+git config --global user.name "Jairo Carballo"
+git config --global user.email "jairocarballolopez5@gmail.com"
