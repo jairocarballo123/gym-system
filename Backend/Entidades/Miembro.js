@@ -7,8 +7,8 @@ class Miembro {
     this.fecha_registro = new Date();
     this.plan_id = plan_id;
     this.fechaVencimiento = null;
-    this.estadoMembresia = 'activo';
-    this.entrenadorid = entrenadorId;
+    this.estadoMembresia = 'inactivo'; // por defecto inactivo hasta asignar plan
+    this.entrenadorId = entrenadorId;
   }
 
   generarIdUnico() {
@@ -28,12 +28,20 @@ class Miembro {
     this.plan_id = plan.id;
     this.estadoMembresia = 'activo';
 
-    const fechaRegistro = new Date(this.fecha_registro);
+    const fechaRegistro = new Date();
     const vencimiento = new Date(fechaRegistro);
     vencimiento.setDate(fechaRegistro.getDate() + plan.duracion_dias);
     this.fechaVencimiento = vencimiento;
+  }
 
-
+  verificarEstadoMembresia() {
+    if (this.fechaVencimiento) {
+      const hoy = new Date();
+      if (hoy > this.fechaVencimiento) {
+        this.estadoMembresia = 'inactivo';
+      }
+    }
+    return this.estadoMembresia;
   }
 }
 

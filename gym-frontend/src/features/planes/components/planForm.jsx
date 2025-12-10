@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 
 const PlanForm = ({ show, handleClose, onSubmit, initialData }) => {
     const [formData, setFormData] = useState({
-        id: '',
+        
         nombre: '',
-        precio: '',
-        duracion_dias: '',
+        precio: 0,
+        duracion_dias: 0,
         descripcion: '',
         activo: 'activo'
     });
@@ -16,7 +16,7 @@ const PlanForm = ({ show, handleClose, onSubmit, initialData }) => {
         if (initialData) {
             setFormData(initialData);
         } else {
-            setFormData({ id: '', nombre: '', precio: '', duracion_dias: '', descripcion: '', activo: 'activo' });
+            setFormData({  nombre: '', precio: 0, duracion_dias:0, descripcion: '', activo: 'activo' });
         }
     }, [initialData, show]);
 
@@ -37,18 +37,7 @@ const PlanForm = ({ show, handleClose, onSubmit, initialData }) => {
             <Form onSubmit={handleSubmit}>
                 <Modal.Body>
                     <Row className="g-3">
-                        {/* ID Manual (Según tu backend) */}
-                        <Col md={4}>
-                            <Form.Label>Código ID</Form.Label>
-                            <Form.Control 
-                                name="id"
-                                value={formData.id}
-                                onChange={handleChange}
-                                placeholder="Ej: P-01"
-                                required
-                                disabled={!!initialData} // No se edita el ID
-                            />
-                        </Col>
+                      
                         
                         <Col md={8}>
                             <Form.Label>Nombre del Plan</Form.Label>

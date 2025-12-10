@@ -9,7 +9,7 @@ class PlanModel {
     }
 
     static async listar() {
-        const result = await pool.query('SELECT * FROM planes WHERE activo = $1', ['activo']);
+        const result = await pool.query('SELECT * FROM planes');
         return result.rows;
     }
 
@@ -21,7 +21,7 @@ class PlanModel {
 
 
     static async actualizar(id, data) {
-    try {
+    try { 
       const planActual = await pool.query('SELECT * FROM planes WHERE id = $1', [id]);
       
       if (planActual.rows.length === 0) {
@@ -72,7 +72,7 @@ static async eliminar(id) {
         
         return { mensaje: 'Plan eliminado correctamente', id };
     } catch (error) {
-        // Tip: Si el plan ya está usado en la tabla MIEMBROS, SQL dará error de llave foránea.
+        
         if (error.code === '23503') {
             throw new Error('No se puede eliminar el plan porque hay miembros o pagos asociados a él. Intenta desactivarlo en su lugar.');
         }

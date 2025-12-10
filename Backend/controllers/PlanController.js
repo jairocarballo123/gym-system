@@ -1,20 +1,14 @@
 const PlanService = require('../services/PlanServices');
 
 async function crearPlan(req, res) {
-    try {
-        const plan = await PlanService.crear(req.body);
-        res.status(201).json({
-            success: true,
-            mensaje: 'Plan creado exitosamente',
-            data: plan
-        });
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const plan = await PlanService.crear(req.body);
+    res.json(plan); 
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 }
+
 
 async function listarPlanes(req, res) {
     try {

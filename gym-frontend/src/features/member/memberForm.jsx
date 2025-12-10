@@ -8,7 +8,7 @@ const MemberForm = ({ show, handleClose, onSubmit, initialData }) => {
     telefono: '',
     plan_id: '', 
     estadoMembresia: 'activo',
-    entrenadorid: ''
+    entrenadorId: ''
   });
   
   useEffect(() => {
@@ -17,7 +17,7 @@ const MemberForm = ({ show, handleClose, onSubmit, initialData }) => {
     } else {
       setFormData({
         nombre: '', direccion: '', telefono: '', 
-        plan_id: '', estadoMembresia: 'activo', entrenadorid: ''
+        plan_id: '' , fechaVencimiento: new Date().toISOString().split('T')[0] , estadoMembresia: '', entrenadorId: ''
       });
     }
   }, [initialData, show]);
@@ -80,8 +80,8 @@ const MemberForm = ({ show, handleClose, onSubmit, initialData }) => {
             <Col md={6} className="mb-3">
                <Form.Label>Entrenador ID</Form.Label>
                <Form.Control 
-                 name="entrenadorid" 
-                 value={formData.entrenadorid|| ''} 
+                 name="entrenadorId" 
+                 value={formData.entrenadorId|| ''} 
                  onChange={handleChange} 
                />
             </Col>

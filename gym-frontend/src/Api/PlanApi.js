@@ -4,7 +4,7 @@ export const planApi = {
   getAll: async () => {
     try {
       const res = await axios.get('/planes');
-      return res.data;
+      return res.data.data;
     } catch (err) {
       console.error("Error en getAll planes:", err.response?.data || err.message);
       throw err;

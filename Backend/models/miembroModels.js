@@ -2,7 +2,7 @@ const pool = require('../DB/db');
 
 class MiembroModel {
 
-  // 📌 INSERTAR miembro en BD
+
   static async crear(miembroData) {
     const query = `
       INSERT INTO Miembro (id, nombre, direccion, telefono, fecha_registro, plan_actual_id ,fecha_vencimiento, estado_Membresia, entrenador_id)
@@ -144,16 +144,16 @@ static async actualizarEntrenador(id, entrenadorId) {
 }
 
 
-  // 📌 ELIMINAR miembro
+
   static async eliminar(id) {
-    // Verificar que existe antes de eliminar
+ 
     await this.buscarPorId(id);
 
     const result = await pool.query('DELETE FROM Miembro WHERE id = $1', [id]);
     return { mensaje: 'Miembro eliminado correctamente' };
   }
 
-  // 📌 VERIFICAR si teléfono ya existe (para evitar duplicados)
+
   static async telefonoExiste(telefono, excluirId = null) {
     let query = 'SELECT id FROM Miembro WHERE telefono = $1';
     const values = [telefono];

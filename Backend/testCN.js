@@ -1,4 +1,4 @@
-const pool = require('./DB/db'); // Asegurate que esta ruta sea correcta
+const pool = require('./DB/db'); 
 
 pool.query('SELECT NOW()', (err, result) => {
     if (err) {

@@ -30,7 +30,7 @@ app.use('/api/auth',AuthRoutes)
 
 
 
-// Puerto de escucha
+// Puerto 
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);

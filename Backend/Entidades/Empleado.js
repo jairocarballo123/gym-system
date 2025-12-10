@@ -1,16 +1,14 @@
-// Entidades/Empleado.js
 class Empleado {
-  constructor(nombre, rol, telefono , especialidad , disponibilidad , activo ,password) {
+  constructor(nombre, rol, telefono, especialidad, disponibilidad, activo, password) {
     this.id = this.generarIdUnico(); 
     this.nombre = nombre;
     this.telefono = telefono;
     this.rol = rol;
     this.especialidad = especialidad;
-    this.disponibilidad = disponibilidad;
+    this.disponibilidad = disponibilidad || 'disponible';
     this.fecha_ingreso = new Date().toISOString().split('T')[0];  
-    this.activo = activo;
+    this.activo = activo || 'activo';
     this.password = password;  
-     
   }
 
   generarIdUnico() {
@@ -32,7 +30,7 @@ class Empleado {
     }
 
     // Validar rol 
-    const rolesPermitidos = ['entrenador', 'recepcionista', 'admin', 'nutriologo' ,'fisioterapeuta'];
+    const rolesPermitidos = ['entrenador', 'recepcionista', 'admin', 'nutriologo', 'fisioterapeuta'];
     if (!rolesPermitidos.includes(this.rol)) {
       errores.push(`Rol debe ser uno de: ${rolesPermitidos.join(',')}`);
     }
@@ -42,16 +40,16 @@ class Empleado {
       errores.push('Teléfono debe tener al menos 8 dígitos');
     }
 
-    // Validar disponibilidad
+    // Validar disponibilidad (USANDO LOS VALORES DE TU BD)
     const disponibilidadesPermitidas = ['disponible', 'ocupado', 'vacaciones', 'enfermedad'];
     if (!disponibilidadesPermitidas.includes(this.disponibilidad)) {
       errores.push('Disponibilidad no válida');
     }
 
-    // Validar activo (NUEVA VALIDACIÓN)
-    const estadosPermitidos = ['activo', 'inactivo'];
+   
+    const estadosPermitidos = ['activo', 'inactivo'];  
     if (!estadosPermitidos.includes(this.activo)) {
-      errores.push('Estado activo debe ser: activo o inactivo');
+      errores.push('Estado activo debe ser: activo o inactivo');  
     }
 
     // Validar especialidad según el rol
@@ -59,28 +57,15 @@ class Empleado {
       errores.push('Los entrenadores deben tener una especialidad');
     }
 
-      if (this.rol === 'admin' && !this.password) {
+    if (this.rol === 'admin' && !this.password) {
       errores.push('contraseña para los admin es obligatoria');
     }
-
-
 
     if (errores.length > 0) {
       throw new Error(errores.join(', '));
     }
 
     return true;
-  }
-
-  
-  desactivar() {
-    this.activo = 'inactivo';
-    this.disponibilidad = 'ocupado';
-  }
-
-  activar() {
-    this.activo = 'activo';
-    this.disponibilidad = 'disponible';
   }
 }
 

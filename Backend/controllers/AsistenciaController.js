@@ -1,4 +1,4 @@
-// controllers/asistenciaController.js
+
 const AsistenciaService = require('../services/AsistenciaServices');
 
 async function registrarEntrada(req, res) {

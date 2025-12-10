@@ -6,7 +6,7 @@ import PlanTable from './components/planTable';
 import PlanForm from './components/planForm';
 
 const PlanList = () => {
-    const { planes, loading, error, createPlan, updatePlan, deletePlan } = usePlans();
+    const { planes, loading, error, createPlan, updatePlan, deletePlan ,refreshPlanes} = usePlans();
     
     const [showModal, setShowModal] = useState(false);
     const [editingPlan, setEditingPlan] = useState(null);
@@ -26,9 +26,11 @@ const PlanList = () => {
     const handleSave = async (formData) => {
         let success = false;
         if (editingPlan) {
-            success = await updatePlan(formData.id, formData);
+            success = await updatePlan(editingPlan.id,formData);
+            refreshPlanes()
         } else {
             success = await createPlan(formData);
+            refreshPlanes()
         }
         
         if (success) setShowModal(false);

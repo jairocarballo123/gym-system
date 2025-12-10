@@ -29,7 +29,7 @@ const LoginPage = () => {
   return (
     <div className="login-container">
       <div className="login-card shadow">
-        <h1 className="gym-title">🏋️ Gym System</h1>
+        <h1 className="gym-title"> Gym System</h1>
         <h2 className="login-title">Iniciar Sesión</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">

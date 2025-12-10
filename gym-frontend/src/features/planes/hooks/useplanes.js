@@ -1,4 +1,3 @@
-// src/features/planes/hooks/usePlans.js
 import { useState, useEffect, useCallback } from 'react';
 import { planApi } from '../../../Api/PlanApi';
 import Swal from 'sweetalert2';
@@ -8,13 +7,11 @@ export const usePlans = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  
   const loadPlanes = useCallback(async () => {
     setLoading(true);
     try {
       const data = await planApi.getAll();
-      const lista = Array.isArray(data) ? data : []; 
-      setPlanes(lista);
+      setPlanes(data);
       setError(null);
     } catch (err) {
       console.error("Error en loadPlanes:", err.response?.data || err.message);
@@ -29,20 +26,19 @@ export const usePlans = () => {
     loadPlanes();
   }, [loadPlanes]);
 
-  // Crear plan
   const createPlan = async (plan) => {
     try {
-      await planApi.create(plan);
-      await loadPlanes(); // recargar lista
+      const creado = await planApi.create(plan);
+      if (!creado || creado.error) throw new Error('Respuesta inválida');
+      await loadPlanes(); 
       Swal.fire('Éxito', 'Plan creado correctamente', 'success');
       return true;
     } catch (err) {
-      Swal.fire('Error', err.response?.data?.error || 'No se pudo crear el plan', 'error');
+      Swal.fire('Error', err.response?.data?.error || err.message || 'No se pudo crear el plan', 'error');
       return false;
     }
   };
 
-  // Actualizar plan
   const updatePlan = async (id, plan) => {
     try {
       await planApi.update(id, plan);
@@ -55,7 +51,6 @@ export const usePlans = () => {
     }
   };
 
-  // Eliminar plan
   const deletePlan = async (id) => {
     const result = await Swal.fire({
       title: '¿Estás seguro?',
@@ -77,5 +72,5 @@ export const usePlans = () => {
     }
   };
 
-  return { planes, loading, error, createPlan, updatePlan, deletePlan };
+  return { planes, loading, error, createPlan, updatePlan, deletePlan, refreshPlanes: loadPlanes };
 };

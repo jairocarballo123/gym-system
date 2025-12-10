@@ -67,8 +67,7 @@ const sidebar = () => {
       </Nav>
       <hr />
       <div className="sidebar-footer text-white text-center mt-4">
-        <small>Usuario conectado:</small>
-        <div className="fw-bold">{user?.user || "usuario"}</div>
+         <p>Usuario conectado:{ user? user.user : 'usuario'}</p>
       </div>
 
     </div>

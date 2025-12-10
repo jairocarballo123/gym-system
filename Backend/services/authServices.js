@@ -1,4 +1,4 @@
-// src/services/authService.js
+
 const empleadoModel = require('../models/EmpleadoModel');
 const jwt = require('jsonwebtoken');
 

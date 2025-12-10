@@ -49,16 +49,22 @@ const EmpleadoService = {
   },
 
   async actualizar(id, data) {
-    try {
-   
-      const existe = await EmpleadoModel.buscarPorId(id);
-      if (!existe) throw new Error('Empleado no encontrado');
+  try {
+    const existe = await EmpleadoModel.buscarPorId(id);
+    if (!existe) throw new Error('Empleado no encontrado');
 
-      return await EmpleadoModel.actualizar(id, data);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
+    
+    const datosActualizados = {
+      ...existe,   
+      ...data      
+    };
+
+    return await EmpleadoModel.actualizar(id, datosActualizados);
+  } catch (error) {
+    throw new Error(error.message);
+  }
+},
+
 
   async eliminar(id) {
     try {

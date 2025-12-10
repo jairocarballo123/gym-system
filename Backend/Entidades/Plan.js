@@ -7,14 +7,18 @@ class Plan {
         this.descripcion = descripcion;
         this.activo = 'activo';
     }
-
-    generarId() {
-        
-        const random = Math.floor(Math.random() * 1000);
-        
-        const prefijo = this.nombre ? this.nombre.substring(0, 3).toUpperCase() : 'PLN';
-        return `PLAN-${prefijo}-${random}`;
+generarId() {
+  
+    if (!this.constructor.contador) {
+        this.constructor.contador = 1000;
     }
+    
+    const prefijo = this.nombre ? this.nombre.substring(0, 3).toUpperCase() : 'PLN';
+    const id = `${prefijo}-${this.constructor.contador++}`;
+    
+  
+    return id;
+}
 
     validarDatos() {
         if (!this.nombre) throw new Error('El plan debe tener nombre');

@@ -45,7 +45,7 @@ const EmpleadoTable = ({ empleados, onEdit, onDelete }) => {
               </td>
               <td>
                 <Badge bg={e.activo ? 'success' : 'dark'}>
-                  {e.activo ? 'Activo' : 'Inactivo'}
+                  {e.activo ? 'activo' : 'inactivo'}
                 </Badge>
               </td>
 

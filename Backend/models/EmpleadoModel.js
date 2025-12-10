@@ -22,7 +22,7 @@ class EmpleadoModel {
         empleado.disponibilidad,
         empleado.fecha_ingreso,
         empleado.activo,
-        empleado.password
+        empleado.password || null
       ];
 
       const result = await pool.query(query, values);
@@ -79,7 +79,7 @@ class EmpleadoModel {
             telefono = $3, 
             especialidad = $4, 
             disponibilidad = $5, 
-            activo = $6
+            activo = $6,
             password =$7
         WHERE id = $8
         RETURNING *
@@ -145,7 +145,7 @@ class EmpleadoModel {
 
   static async obtenerMiembrosAsignados(entrenadorId) {
     try {
-      // Asumiendo que existe una tabla 'miembros' con columna 'entrenador_id'
+     
       const query = `
         SELECT m.id, m.nombre, m.telefono, m.fecha_registro, m.objetivo
         FROM miembros m

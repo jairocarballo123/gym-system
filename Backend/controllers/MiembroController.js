@@ -67,7 +67,7 @@ async function buscarMiembro(req, res) {
   }
 }
 
-// 📌 NUEVO: ACTUALIZAR MIEMBRO
+
 async function actualizarMiembro(req, res) {
   try {
     const miembro = await MiembroService.actualizar(req.params.id, req.body);

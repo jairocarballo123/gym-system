@@ -10,7 +10,7 @@ export const empleadosApi = {
  
   create: async (data) => {
     const res = await api.post("/Empleados", data);
-    return res.data;
+    return res.data.data;
   },
 
  

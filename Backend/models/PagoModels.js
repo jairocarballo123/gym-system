@@ -7,7 +7,7 @@ class PaymentModel {
         try {
             const query = 'SELECT recibo_id FROM pagos ORDER BY id DESC LIMIT 1';
             const { rows } = await pool.query(query);
-            return rows[0]; // Retorna { recibo_id: 'REC-0005' } o undefined
+            return rows[0]; 
         } catch (error) {
             throw error;
         }

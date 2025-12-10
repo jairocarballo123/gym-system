@@ -28,12 +28,11 @@ const login = async (req, res) => {
             return res.status(401).json({ message: "Usuario o contraseña incorrectos." });
         }
 
-        // 👇 CAMBIA ESTO TEMPORALMENTE 👇
-        // En lugar del mensaje genérico, enviamos el error real para leerlo
+    
         return res.status(500).json({ 
             message: "Error interno",
-            errorReal: error.message,  // <--- ESTO NOS DIRÁ LA VERDAD
-            stack: error.stack         // <--- ESTO NOS DIRÁ DÓNDE FALLÓ
+            errorReal: error.message,  
+            stack: error.stack         
         });
       
     }

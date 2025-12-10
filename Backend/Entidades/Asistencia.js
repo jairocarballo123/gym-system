@@ -1,4 +1,4 @@
-// Entidades/Asistencia.js
+
 class Asistencia {
   constructor(miembroId) {
     try {

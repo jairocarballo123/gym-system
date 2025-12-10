@@ -28,6 +28,7 @@ const PlanTable = ({ planes, onEdit, onDelete }) => {
                                 <td>{plan.duracion_dias} días</td>
                                 <td>
                                     <Badge bg={plan.activo === 'activo' ? 'success' : 'secondary'}>
+                                     
                                         {plan.activo}
                                     </Badge>
                                 </td>
