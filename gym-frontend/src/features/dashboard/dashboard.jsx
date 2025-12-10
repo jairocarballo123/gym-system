@@ -222,16 +222,16 @@ const DashboardHome = () => {
                             <thead className="bg-light text-muted small text-uppercase font-monospace">
                                 <tr>
                                     <th className="ps-4">ID Pago</th>
-                                    <th>Socio</th>
+                                    <th>Miembro</th>
                                     <th>Recibo</th>
                                     <th className="text-end pe-4">Monto</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {stats.recentPayments.length > 0 ? (
-                                    stats.recentPayments.map((pago, idx) => (
-                                        <tr key={pago.id || idx} className="border-bottom">
-                                            <td className="ps-4 fw-bold text-muted">#{pago.id}</td>
+                                    stats.recentPayments.map((pago, ) => (
+                                        <tr key={pago.recibo_id } className="border-bottom">
+                                            <td className="ps-4 fw-bold text-muted">#{pago.recibo_id}</td>
                                             <td>
                                                 <div className="d-flex align-items-center">
                                                     <div className="bg-light rounded-circle p-2 me-2">
