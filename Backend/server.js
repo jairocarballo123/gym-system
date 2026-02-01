@@ -38,7 +38,7 @@ app.use('/api/auth',AuthRoutes)
 
 
 
-
+const PORT = process.env.PORT || 3000;
 
 // Espera a que la base de datos esté lista antes de iniciar el servidor
 async function waitForDatabaseAndStart(retries = 0) {
