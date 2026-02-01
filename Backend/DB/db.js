@@ -9,3 +9,13 @@ const pool = new Pool({
 });
 
 module.exports = pool;
+
+
+// const { Pool } = require('pg');
+
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL
+// });
+
+// module.exports = pool;
+  

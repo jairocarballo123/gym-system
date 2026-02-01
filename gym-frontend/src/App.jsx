@@ -6,16 +6,10 @@ import Topbar from "./components/Layouts/Navbar";
 import AppRouter from "./Router/AppRouter";
 import LoginPage from "./features/auth/LoginPage";
 import { AuthProvider } from "./features/auth/authContext";
-import { useAuth } from "./Hooks/useauth";
+// import { useAuth } from "./Hooks/useauth";
 import "./index.css";
 
 const AppContent = () => {
-  const { token } = useAuth();
-
-  if (!token) {
-    return <LoginPage />; 
-  }
-
   return (
     <div className="app-container">
       <div className="sidebar-wrapper">
@@ -30,6 +24,8 @@ const AppContent = () => {
     </div>
   );
 };
+
+
 
 function App() {
   return (

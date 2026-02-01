@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:15
+    container_name: gym_db
+    restart: always
+    environment:
+      POSTGRES_USER: soporte
+      POSTGRES_PASSWORD: 210108
+      POSTGRES_DB: bd_sg
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: gym_backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PORT: 3000
+      JWT_SECRET: super_clave_secreta_gym_backend
+      JWT_EXPIRES_IN: 8h
+      DATABASE_URL: postgres://soporte:210108@db:5432/BD_SG
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build: ../gym-frontend
+    container_name: gym_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
