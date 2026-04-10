@@ -1,174 +1,88 @@
-// controllers/empleadoController.js
+// controllers/EmpleadoController.js
 const EmpleadoService = require('../services/EmpleadoServices');
 
-async function registrarEmpleado(req, res) {
-  try {
-    const empleado = await EmpleadoService.registrar(req.body);
-    
-    res.status(201).json({
-      success: true,
-      mensaje: 'Empleado registrado exitosamente',
-      data: empleado
-    });
-    
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
+class EmpleadoController {
 
-async function listarEmpleados(req, res) {
-  try {
-    const empleados = await EmpleadoService.listar();
-    
-    res.status(200).json({
-      success: true,
-      data: empleados,
-      total: empleados.length
-    });
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
-
-async function buscarEmpleadoPORid(req, res) {
-  try {
-    const empleado = await EmpleadoService.buscarPorId(req.params.id);
-    
-    res.status(200).json({
-      success: true,
-      data: empleado
-    });
-    
-  } catch (error) {
-    const statusCode = error.message.includes('no encontrado') ? 404 : 400;
-    res.status(statusCode).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
-
-async function actualizarEmpleado(req, res) {
-  try {
-    const empleado = await EmpleadoService.actualizar(req.params.id, req.body);
-    
-    res.status(200).json({
-      success: true,
-      mensaje: 'Empleado actualizado exitosamente',
-      data: empleado
-    });
-    
-  } catch (error) {
-    const statusCode = error.message.includes('no encontrado') ? 404 : 400;
-    res.status(statusCode).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
-
-async function eliminarEmpleado(req, res) {
-  try {
-    const resultado = await EmpleadoService.eliminar(req.params.id);
-    
-    res.status(200).json({
-      success: true,
-      data: resultado
-    });
-    
-  } catch (error) {
-    const statusCode = error.message.includes('no encontrado') ? 404 : 400;
-    res.status(statusCode).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
-
-async function buscarEmpleadosPorRol(req, res) {
-  try {
-    const empleados = await EmpleadoService.buscarPorRol(req.params.rol);
-    
-    res.status(200).json({
-      success: true,
-      data: empleados,
-      total: empleados.length,
-      rol: req.params.rol
-    });
-    
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
-
-async function obtenerMiembrosAsignados(req, res) {
-  try {
-    const { id } = req.params;
-
-    const resultado = await EmpleadoService.obtenerMiembrosAsignados(id);
-    
-    res.status(200).json({
-      success: true,
-      data: resultado
-    });
-    
-  } catch (error) {
-    let statusCode = 400;
-    if (error.message.includes('no encontrado')) statusCode = 404;
-    
-    res.status(statusCode).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
-
-async function buscarEmpleadosPorNombre(req, res) {
-  try {
-    const { nombre } = req.params;
-
-    const empleados = await EmpleadoService.buscarPorNombre(nombre);
-
-    if (empleados.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `No se encontró empleado con nombre "${nombre}"`
-      });
+  static async obtenerTodos(req, res) {
+    try {
+      const empleados = await EmpleadoService.obtenerEmpleados();
+      res.json({ success: true, data: empleados });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
     }
+  }
 
-    res.status(200).json({
-      success: true,
-      cantidad: empleados.length,
-      data: empleados
-    });
+ 
+  static async listarEntrenadores(req, res) {
+    try {
+      const entrenadores = await EmpleadoService.listarEntrenadores();
+      res.json({ success: true, data: entrenadores });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
 
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+  // Obtener empleado por ID (si lo necesitas)
+  static async obtenerPorNombre(req, res) {
+    try {
+      const { nombre } = req.params;
+      const empleado = await EmpleadoService.obtenerEmpleadoPorNombre(nombre); 
+      if (!empleado) {
+        return res.status(404).json({ success: false, message: 'Empleado no encontrado' });
+      }
+      res.json({ success: true, data: empleado });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  static async obtenerPorId(req, res) {
+    try {
+      const { id } = req.params;
+      const empleado = await EmpleadoService.obtenerEmpleadoPorId(id); 
+      if (!empleado) {
+        return res.status(404).json({ success: false, message: 'Empleado no encontrado' });
+      }
+      res.json({ success: true, data: empleado });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+
+  // Crear empleado
+  static async crear(req, res) {
+    try {
+      const nuevoEmpleado = await EmpleadoService.crearEmpleado(req.body);
+      res.status(201).json({ success: true, data: nuevoEmpleado });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  // Actualizar empleado
+  static async actualizar(req, res) {
+    try {
+       console.log('📥 Datos recibidos en backend:', req.body);  // ← AGREGAR
+       console.log('📥 ID recibido:', req.params.id);            // ← AGREGAR
+      const { id } = req.params;
+      const actualizado = await EmpleadoService.actualizarEmpleado(id, req.body);
+      res.json({ success: true, data: actualizado });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  // Desactivar empleado (baja lógica)
+  static async desactivar(req, res) {
+    try {
+      const { id } = req.params;
+      await EmpleadoService.desactivarEmpleado(id);
+      res.json({ success: true, message: 'Empleado desactivado correctamente' });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
   }
 }
 
-
-
-module.exports = {
-  registrarEmpleado,
-  listarEmpleados,
-  buscarEmpleadoPORid,
-  actualizarEmpleado,
-  eliminarEmpleado,
-  buscarEmpleadosPorRol,
-  obtenerMiembrosAsignados,
-  buscarEmpleadosPorNombre
-};
+module.exports = EmpleadoController;

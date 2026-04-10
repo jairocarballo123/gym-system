@@ -1,106 +1,190 @@
-import  { useState, useEffect } from 'react';
-import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
+// src/features/planes/components/PlanForm.jsx
+import React, { useState, useEffect } from 'react';
+import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
+import { FaSave, FaTimes } from 'react-icons/fa';
+
+const INITIAL_STATE = {
+  nombre: '',
+  precio: '',
+  duracion_dias: '',
+  descripcion: '',
+  isAddOn: false,
+};
 
 const PlanForm = ({ show, handleClose, onSubmit, initialData }) => {
-    const [formData, setFormData] = useState({
-        
-        nombre: '',
-        precio: 0,
-        duracion_dias: 0,
-        descripcion: '',
-        activo: 'activo'
-    });
+  const [formData, setFormData] = useState(INITIAL_STATE);
+  const [validated, setValidated] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const isEditing = !!initialData?.PlanId;
 
-    // Si viene "initialData" es Edición, si no, es Creación
-    useEffect(() => {
-        if (initialData) {
-            setFormData(initialData);
-        } else {
-            setFormData({  nombre: '', precio: 0, duracion_dias:0, descripcion: '', activo: 'activo' });
-        }
-    }, [initialData, show]);
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        nombre: initialData.PlanName || '',
+        precio: initialData.Price || '',
+        duracion_dias: initialData.DurationDays || '',
+        descripcion: initialData.Description || '',
+        isAddOn: initialData.IsAddOn || false,
+      });
+    } else {
+      setFormData(INITIAL_STATE);
+    }
+    setValidated(false);
+  }, [initialData, show]);
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit(formData);
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
 
-    return (
-        <Modal show={show} onHide={handleClose} backdrop="static" centered>
-            <Modal.Header closeButton className={initialData ? "bg-warning" : "bg-primary text-white"}>
-                <Modal.Title>{initialData ? 'Editar Plan' : 'Nuevo Plan'}</Modal.Title>
-            </Modal.Header>
-            <Form onSubmit={handleSubmit}>
-                <Modal.Body>
-                    <Row className="g-3">
-                      
-                        
-                        <Col md={8}>
-                            <Form.Label>Nombre del Plan</Form.Label>
-                            <Form.Control 
-                                name="nombre"
-                                value={formData.nombre}
-                                onChange={handleChange}
-                                required
-                            />
-                        </Col>
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
 
-                        <Col md={6}>
-                            <Form.Label>Precio (C$)</Form.Label>
-                            <Form.Control 
-                                type="number" 
-                                name="precio"
-                                value={formData.precio}
-                                onChange={handleChange}
-                                required
-                                step="0.01"
-                            />
-                        </Col>
+    if (!formData.nombre.trim()) {
+      toast.error('El nombre es obligatorio');
+      return;
+    }
 
-                        <Col md={6}>
-                            <Form.Label>Duración (Días)</Form.Label>
-                            <Form.Control 
-                                type="number" 
-                                name="duracion_dias"
-                                value={formData.duracion_dias}
-                                onChange={handleChange}
-                                required
-                            />
-                        </Col>
+    if (parseFloat(formData.precio) <= 0) {
+      toast.error('El precio debe ser mayor a cero');
+      return;
+    }
 
-                        <Col md={12}>
-                            <Form.Label>Descripción</Form.Label>
-                            <Form.Control 
-                                as="textarea" 
-                                name="descripcion"
-                                value={formData.descripcion}
-                                onChange={handleChange}
-                                rows={2}
-                            />
-                        </Col>
+    if (parseInt(formData.duracion_dias) <= 0) {
+      toast.error('La duración debe ser mayor a cero');
+      return;
+    }
 
-                        <Col md={12}>
-                            <Form.Label>Estado</Form.Label>
-                            <Form.Select name="activo" value={formData.activo} onChange={handleChange}>
-                                <option value="activo">Activo</option>
-                                <option value="inactivo">Inactivo</option>
-                            </Form.Select>
-                        </Col>
-                    </Row>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
-                    <Button variant={initialData ? "warning" : "primary"} type="submit">
-                        {initialData ? 'Actualizar' : 'Guardar'}
-                    </Button>
-                </Modal.Footer>
-            </Form>
-        </Modal>
-    );
+    setLoading(true);
+    try {
+      await onSubmit(formData);
+      handleClose();
+    } catch (err) {
+      // El error ya se maneja en el padre
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal show={show} onHide={handleClose} backdrop="static" centered size="lg">
+      <Modal.Header closeButton className="bg-light border-bottom-0 pb-0">
+        <Modal.Title className="fw-bold">
+          {isEditing ? 'Editar Plan' : 'Nuevo Plan'}
+        </Modal.Title>
+      </Modal.Header>
+      <Form noValidate validated={validated} onSubmit={handleSubmit}>
+        <Modal.Body className="pt-3">
+          <Row className="g-3">
+            <Col md={12}>
+              <Form.Group>
+                <Form.Label className="fw-semibold text-muted small">
+                  Nombre del Plan <span className="text-danger">*</span>
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  required
+                  autoFocus
+                />
+                <Form.Control.Feedback type="invalid">
+                  El nombre es requerido
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+
+            <Col md={6}>
+              <Form.Group>
+                <Form.Label className="fw-semibold text-muted small">
+                  Precio <span className="text-danger">*</span>
+                </Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  name="precio"
+                  value={formData.precio}
+                  onChange={handleChange}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  El precio es requerido
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+
+            <Col md={6}>
+              <Form.Group>
+                <Form.Label className="fw-semibold text-muted small">
+                  Duración (días) <span className="text-danger">*</span>
+                </Form.Label>
+                <Form.Control
+                  type="number"
+                  min="1"
+                  name="duracion_dias"
+                  value={formData.duracion_dias}
+                  onChange={handleChange}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  La duración es requerida
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+
+            <Col md={12}>
+              <Form.Group>
+                <Form.Label className="fw-semibold text-muted small">Descripción</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  name="descripcion"
+                  value={formData.descripcion}
+                  onChange={handleChange}
+                  placeholder="Beneficios del plan..."
+                />
+              </Form.Group>
+            </Col>
+
+            <Col md={12}>
+              <Form.Check
+                type="checkbox"
+                label="¿Es un plan complementario (adicional)?"
+                name="isAddOn"
+                checked={formData.isAddOn}
+                onChange={handleChange}
+                className="mt-2"
+              />
+              <Form.Text className="text-muted">
+                Los planes complementarios pueden agregarse a una membresía principal.
+              </Form.Text>
+            </Col>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer className="border-top-0 bg-light">
+          <Button variant="outline-secondary" onClick={handleClose} disabled={loading}>
+            <FaTimes className="me-2" /> Cancelar
+          </Button>
+          <Button variant="primary" type="submit" disabled={loading}>
+            <FaSave className="me-2" />
+            {loading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Registrar Plan')}
+          </Button>
+        </Modal.Footer>
+      </Form>
+    </Modal>
+  );
 };
 
 export default PlanForm;

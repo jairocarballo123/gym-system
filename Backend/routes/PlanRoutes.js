@@ -1,22 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const PlanController = require('../controllers/PlanController');
+const { authorize } = require('../middlewares/role.middleware');
 
-const {
-    crearPlan,
-    listarPlanes,
-    buscarPlan,
-    actualizarPlan, 
-    eliminarPlan    
-} = require('../controllers/PlanController');
+// ========== RUTAS DE ESTADÍSTICAS (van antes de /:id) ==========
+router.get('/resumen', PlanController.obtenerResumen);
+router.get('/mas-vendido', PlanController.obtenerPlanMasVendido);
+router.get('/ingresos', PlanController.ingresosPorPlan);
+router.get('/miembros-por-plan', PlanController.getMiembrosPorPlan);
+router.get('/proximos-vencer', PlanController.getProximosVencer);
 
-router.get('/', listarPlanes);
+// ========== RUTAS CRUD ==========
+router.get('/', PlanController.listar);
+router.get('/:id', PlanController.buscarPorId);
 
-router.post('/', crearPlan);
-
-router.get('/:id', buscarPlan);
-
-router.put('/:id', actualizarPlan); 
-
-router.delete('/:id', eliminarPlan);   
+router.post('/', authorize(1), PlanController.crear);
+router.put('/:id', authorize(1), PlanController.actualizar);
+router.patch('/:id', authorize(1), PlanController.eliminar);
 
 module.exports = router;

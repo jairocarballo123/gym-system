@@ -1,29 +1,23 @@
 class Plan {
-    constructor(nombre, precio, duracion_dias, descripcion) {
-        this.id = this.generarId();
+   
+    constructor(nombre, precio, duracion_dias, descripcion, isAddOn = 0, id = null) {
         this.nombre = nombre;
-        this.precio = parseFloat(precio);
-        this.duracion_dias = parseInt(duracion_dias);
+        this.precio = precio;
+        this.duracion_dias = duracion_dias;
         this.descripcion = descripcion;
-        this.activo = 'activo';
+        this.isAddOn = isAddOn;
+        this.id = id; 
     }
-generarId() {
-  
-    if (!this.constructor.contador) {
-        this.constructor.contador = 1000;
-    }
-    
-    const prefijo = this.nombre ? this.nombre.substring(0, 3).toUpperCase() : 'PLN';
-    const id = `${prefijo}-${this.constructor.contador++}`;
-    
-  
-    return id;
-}
 
     validarDatos() {
-        if (!this.nombre) throw new Error('El plan debe tener nombre');
-        if (this.precio < 0) throw new Error('El precio no puede ser negativo');
-        if (this.duracion_dias < 1) throw new Error('La duración debe ser al menos 1 día');
+        if (!this.nombre) throw new Error("El nombre es obligatorio");
+        if (this.precio < 0) throw new Error("El precio no puede ser negativo");
+        if (this.duracion_dias < 0) throw new Error("La duración no puede ser negativa");
+    }
+    
+    esServicioExtra() {
+        return this.isAddOn === 1;
     }
 }
+
 module.exports = Plan;

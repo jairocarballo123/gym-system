@@ -1,249 +1,184 @@
+// src/features/Empleados/components/EmpleadoForm.jsx
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form, Row, Col, InputGroup, Alert } from 'react-bootstrap';
-import { User, Phone, Briefcase, Lock, Clock, IdCard } from 'lucide-react';
+import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
+import { FaSave, FaTimes } from 'react-icons/fa';
+
+const ROLES = { ADMIN: 1, ENTRENADOR: 2, RECEPCIONISTA: 3 };
+
+const INITIAL_STATE = {
+  nombre: '',
+  telefono: '',
+  roleId: ROLES,
+  especialidad: '',
+  disponibilidad: '',
+  password: '',
+};
 
 const EmpleadoForm = ({ show, handleClose, onSubmit, initialData }) => {
-    // Estado del formulario
-    const [formData, setFormData] = useState({
-        nombre: '',
-        telefono: '',
-        rol: '',
-        especialidad: '',
-        disponibilidad: '',
-        activo: '',
-        password: ''
-    });
+  const [formData, setFormData] = useState(INITIAL_STATE);
+  const [validated, setValidated] = useState(false);
+  const isEditing = !!initialData?.id;
 
-    //  manejar errores y feedback visual
-    const [error, setError] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        nombre: initialData.nombre || initialData.fullName || '',
+        telefono: initialData.telefono || initialData.phone || '',
+        roleId: initialData.roleId || ROLES.ENTRENADOR,
+        especialidad: initialData.especialidad || '',
+        disponibilidad: initialData.disponibilidad || '',
+        password: '',
+      });
+    } else {
+      setFormData(INITIAL_STATE);
+    }
+    setValidated(false);
+  }, [initialData, show]);
 
-    useEffect(() => {
-        if (show) {
-            // Limpiamos errores al abrir el modal
-            setError(null);
-            setIsSubmitting(false);
+  const handleChange = (e) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? parseInt(value) : value,
+    }));
+  };
 
-            if (initialData) {
-                // Asegurar que activo tenga valor válido
-                const activoValido = initialData.activo === 'activo' || initialData.activo === 'inactivo' 
-                    ? initialData.activo 
-                    : 'activo';
-                
-                setFormData({
-                    ...initialData,
-                    activo: activoValido,
-                    password: '' // La contraseña siempre inicia vacía por seguridad
-                });
-            } else {
-                // Resetear form si es nuevo registro
-                setFormData({
-                    nombre: '', 
-                    telefono: '', 
-                    rol: '',
-                    especialidad: '', 
-                    disponibilidad: 'disponible',
-                    password: '', 
-                    activo: 'activo'
-                });
-            }
-        }
-    }, [initialData, show]);
 
-    const handleChange = (e) => {
-        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-        setFormData({ ...formData, [e.target.name]: value });
-        
-        // Si el usuario cambia algo, limpiamos el error para que intente de nuevo
-        if (error) setError(null);
-    };
+  const handleSubmit = (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  if (form.checkValidity() === false) {
+    e.stopPropagation();
+    setValidated(true);
+    return;
+  }
 
-    // Lógica para determinar si la contraseña es obligatoria
-    // Regla: Es obligatoria SOLO si es un registro NUEVO Y el rol es 'admin'
-    const isPasswordRequired = !initialData && formData.rol === 'admin';
+ 
+  const payload = {
+    nombre: formData.nombre,
+    telefono: formData.telefono,
+    roleId: formData.roleId,
+    statusId: 1,
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setError(null);
+  if (formData.roleId === 2) {
+    if (formData.especialidad) payload.especialidad = formData.especialidad;
+    if (formData.disponibilidad) payload.disponibilidad = formData.disponibilidad;
+  }
 
-        try {
-            // 1. Validaciones de Negocio previas al envío
-            if (formData.rol === 'admin' && !initialData && !formData.password) {
-                throw new Error("Para registrar un Administrador, la contraseña es obligatoria.");
-            }
+  if (formData.password) payload.password = formData.password;
 
-            // 2. Preparar los datos (Sanitization)
-            const dataToSend = { ...formData };
+  onSubmit(payload);
+};
+ 
 
-            // Asegurar que activo siempre tenga valor válido
-            if (!dataToSend.activo || (dataToSend.activo !== 'activo' && dataToSend.activo !== 'inactivo')) {
-                dataToSend.activo = 'activo';
-            }
+  const isEntrenador = formData.roleId === ROLES.ENTRENADOR;
 
-            // Si es edición y el campo pass está vacío, lo borramos para no enviar string vacío
-            if (initialData && !dataToSend.password) {
-                delete dataToSend.password;
-            }
-            
-            // Si no es admin, no enviamos password
-            if (formData.rol !== 'admin') {
-                delete dataToSend.password; 
-            }
+  return (
+    <Modal show={show} onHide={handleClose} backdrop="static" centered size="lg">
+      <Modal.Header closeButton>
+        <Modal.Title>{isEditing ? 'Editar Empleado' : 'Nuevo Empleado'}</Modal.Title>
+      </Modal.Header>
+      <Form noValidate validated={validated} onSubmit={handleSubmit}>
+        <Modal.Body>
+          <Row className="g-3">
+            <Col md={12}>
+              <Form.Group>
+                <Form.Label>Nombre Completo *</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  required
+                />
+              </Form.Group>
+            </Col>
 
-            await onSubmit(dataToSend);
-     
-        } catch (err) {
-            console.error("Error en formulario empleado:", err);
-            setError(err.message || "Ocurrió un error inesperado al guardar el empleado.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+            <Col md={6}>
+              <Form.Group>
+                <Form.Label>Teléfono</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="telefono"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </Col>
 
-    return (
-        <Modal show={show} onHide={handleClose} backdrop="static" centered size="lg">
-            <Modal.Header closeButton className="bg-primary text-white">
-                <Modal.Title>{initialData ? 'Editar Empleado' : 'Nuevo Empleado'}</Modal.Title>
-            </Modal.Header>
+            <Col md={6}>
+              <Form.Group>
+                <Form.Label>Rol *</Form.Label>
+                <Form.Select name="roleId" value={formData.roleId} onChange={handleChange} required>
+                  <option value={ROLES.ENTRENADOR}>Entrenador</option>
+                  <option value={ROLES.RECEPCIONISTA}>Recepcionista</option>
+                  <option value={ROLES.ADMIN}>Administrador</option>
+                </Form.Select>
+              </Form.Group>
+            </Col>
 
-            <Form onSubmit={handleSubmit}>
-                <Modal.Body className="p-4">
-                    
-                    {/* Mensaje de Error Robusto */}
-                    {error && <Alert variant="danger">{error}</Alert>}
+            {isEntrenador && (
+              <>
+                <Col md={12}>
+                  <Form.Group>
+                    <Form.Label>Especialidad</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="especialidad"
+                      value={formData.especialidad}
+                      onChange={handleChange}
+                      placeholder="Ej. Musculación, Crossfit, Yoga"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={12}>
+                  <Form.Group>
+                    <Form.Label>Disponibilidad (horario)</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="disponibilidad"
+                      value={formData.disponibilidad}
+                      onChange={handleChange}
+                      placeholder="Ej. Lun-Vie 8-12, 15-19"
+                    />
+                  </Form.Group>
+                </Col>
+              </>
+            )}
 
-                    <h6 className="text-muted mb-3 text-uppercase fw-bold small">Datos Generales</h6>
-                    <Row>
-                        <Col md={6} className="mb-3">
-                            <Form.Label>Nombre Completo <span className="text-danger">*</span></Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text><User size={18} /></InputGroup.Text>
-                                <Form.Control 
-                                    name="nombre" 
-                                    value={formData.nombre} 
-                                    onChange={handleChange} 
-                                    required 
-                                    placeholder="Nombre y Apellidos"
-                                />
-                            </InputGroup>
-                        </Col>
-
-                        <Col md={6} className="mb-3">
-                            <Form.Label>Teléfono <span className="text-danger">*</span></Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text><Phone size={18} /></InputGroup.Text>
-                                <Form.Control 
-                                    name="telefono" 
-                                    value={formData.telefono} 
-                                    onChange={handleChange} 
-                                    required 
-                                    placeholder="Solo números"
-                                />
-                            </InputGroup>
-                        </Col>
-                    </Row>
-
-                    <h6 className="text-muted mb-3 text-uppercase fw-bold small mt-2">Detalles del Cargo</h6>
-                    <Row>
-                        <Col md={6} className="mb-3">
-                            <Form.Label>Rol <span className="text-danger">*</span></Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text><IdCard size={18} /></InputGroup.Text>
-                                <Form.Select 
-                                    name="rol" 
-                                    value={formData.rol} 
-                                    onChange={handleChange} 
-                                    required
-                                >
-                                    <option value="">Selecciona un rol</option>
-                                    <option value="admin">Administrador (Con acceso)</option>
-                                    <option value="entrenador">Entrenador</option>
-                                    <option value="recepcionista">Recepcionista</option>
-                                    <option value="nutriologo">Nutriólogo</option>
-                                    <option value="fisioterapeuta">Fisioterapeuta</option>
-                                </Form.Select>
-                            </InputGroup>
-                        </Col>
-
-                        <Col md={6} className="mb-3">
-                            <Form.Label>Especialidad</Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text><Briefcase size={18} /></InputGroup.Text>
-                                <Form.Control
-                                    name="especialidad"
-                                    value={formData.especialidad || ''}
-                                    onChange={handleChange}
-                                    placeholder="Ej: Pesas, Yoga, CrossFit"
-                                />
-                            </InputGroup>
-                        </Col>
-
-                        <Col md={6} className="mb-3">
-                            <Form.Label>Disponibilidad</Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text><Clock size={18} /></InputGroup.Text>
-                                <Form.Select name="disponibilidad" value={formData.disponibilidad} onChange={handleChange}>
-                                    <option value="disponible">Disponible</option>
-                                    <option value="ocupado">ocupado</option>
-                                    <option value="vacaciones">Vacaciones</option>
-                                </Form.Select>
-                            </InputGroup>
-                        </Col>
-
-                        {/* LÓGICA DE CONTRASEÑA - SOLO SE MUESTRA PARA ADMIN */}
-                        {formData.rol === 'admin' && (
-                            <Col md={6} className="mb-3">
-                                <Form.Label>
-                                    Contraseña
-                                    {isPasswordRequired && <span className="text-danger"> *</span>}
-                                    {initialData && <small className="text-muted ms-1">(Opcional al editar)</small>}
-                                </Form.Label>
-                                <InputGroup>
-                                    <InputGroup.Text className={isPasswordRequired ? "bg-warning text-dark" : ""}>
-                                        <Lock size={18} />
-                                    </InputGroup.Text>
-                                    <Form.Control
-                                        type="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        required={isPasswordRequired}
-                                        placeholder="Contraseña de acceso"
-                                    />
-                                </InputGroup>
-                            </Col>
-                        )}
-
-                        <Col md={12}>
-                            <Form.Check
-                                type="switch"
-                                id="activo-switch"
-                                label={formData.activo === 'activo' ? "activo" : "inactivo"}
-                                name="activo"
-                                checked={formData.activo === 'activo'}
-                                onChange={(e) => {
-                                 
-                                    const valorParaBD = e.target.checked ? 'activo' : 'inactivo';
-                                    setFormData({ ...formData, activo: valorParaBD });
-                                }}
-                                className="mt-2 fw-bold text-primary"
-                            />
-                        </Col>
-                    </Row>
-
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
-                        Cancelar
-                    </Button>
-                    <Button variant="primary" type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Guardando...' : (initialData ? 'Guardar Cambios' : 'Registrar Empleado')}
-                    </Button>
-                </Modal.Footer>
-            </Form>
-        </Modal>
-    );
+            {(!isEditing || (isEditing && formData.roleId === ROLES.ADMIN)) && (
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label>
+                    Contraseña {!isEditing && formData.roleId === ROLES.ADMIN && <span className="text-danger">*</span>}
+                  </Form.Label>
+                  <Form.Control
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required={!isEditing && formData.roleId === ROLES.ADMIN}
+                  />
+                  <Form.Text className="text-muted">
+                    {isEditing ? 'Dejar vacío para no cambiar' : 'Obligatoria para administradores'}
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+            )}
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            <FaTimes /> Cancelar
+          </Button>
+          <Button variant="primary" type="submit">
+            <FaSave /> {isEditing ? 'Guardar Cambios' : 'Registrar'}
+          </Button>
+        </Modal.Footer>
+      </Form>
+    </Modal>
+  );
 };
 
 export default EmpleadoForm;

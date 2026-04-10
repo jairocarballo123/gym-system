@@ -1,171 +1,163 @@
+// services/MiembroServices.js
+const MemberModel = require('../models/miembroModels');
 const Miembro = require('../Entidades/Miembro');
-const EmpleadoModel = require('../models/EmpleadoModel');
-const MiembroModel = require('../models/miembroModels');
-const PlanModel = require('../models/PlanModel')
 
-class MiembroService {
+// Cache simple para consultas frecuentes
+const NodeCache = require('node-cache');
+const memberCache = new NodeCache({ stdTTL: 300 }); // 5 minutos
 
-    
-    async registrar(data) {
-        try {
-            if (!data.nombre?.trim() || !data.telefono?.trim()) {
-                throw new Error('Nombre y teléfono son obligatorios');
-            }
+class MemberService {
 
-            const telefonoExiste = await MiembroModel.telefonoExiste(data.telefono);
-            if (telefonoExiste) {
-                throw new Error('El teléfono ya está registrado con otro miembro');
-            }
+  static _formatearRespuesta(row) {
+    const miembro = new Miembro(row);
+    return {
+      id: miembro.id,
+      fullName: miembro.fullName,
+      phone: miembro.obtenerTelefonoFormateado(),
+      address: miembro.address,
+      statusId: miembro.statusId,
+      balance: miembro.balance,
+      endDate: miembro.endDate,
+      tieneAcceso: miembro.tieneAcceso(),
+      diasRestantes: miembro.diasRestantes(),
+      trainerName: row.trainerName || null 
+    };
+  }
 
-            const miembro = new Miembro(
-                data.nombre.trim(),
-                data.direccion?.trim(),
-                data.telefono.trim(),
-                data.plan_id || null,
-                data.entrenadorId || null
-            );
+  // services/MiembroServices.js - nuevos métodos
 
-            if (!miembro.validarTelefono()) {
-                throw new Error('Teléfono inválido. Debe tener entre 8-15 dígitos.');
-            }
+  static async obtenerResumen() {
+    return await MemberModel.obtenerResumen();
+  }
 
-
-            if (data.plan_id) {
-                const plan = await PlanModel.buscarPorId(data.plan_id);
-                if (!plan) throw new Error('El plan seleccionado no existe');
-                miembro.asignarPlan(plan);
-            }
-
-            const miembroCreado = await MiembroModel.crear(miembro);
-            return miembroCreado;
-
-        } catch (error) {
-            if (error.code === '23505') {
-                throw new Error('ID duplicado, intenta registrar nuevamente');
-            }
-            throw error;
-        }
-    }
-
-
-   async asignarEntrenador(miembroId, entrenadorId) {
-  try {
-    
-    const miembro = await MiembroModel.buscarPorId(miembroId);
+  static async obtenerDetalleCompleto(id) {
+    // Datos básicos
+    const miembro = await this.buscarPorId(id);
     if (!miembro) throw new Error('Miembro no encontrado');
 
- 
-    const entrenador = await EmpleadoModel.buscarPorId(entrenadorId);
-    if (!entrenador) throw new Error('Entrenador no encontrado');
-    if (entrenador.rol !== 'entrenador') {
-      throw new Error('Solo se pueden asignar empleados con rol de entrenador');
-    }
-
-    // 3. Actualizar el miembro con el entrenador
-    const miembroActualizado = await MiembroModel.actualizarEntrenador(miembroId, entrenadorId);
+    // Historiales
+    const membresias = await MemberModel.obtenerHistorialMembresias(id);
+    const pagos = await MemberModel.obtenerHistorialPagos(id);
+    const asistencia = await MemberModel.obtenerAsistenciaUltimosDias(id, 30);
+   
 
     return {
-      mensaje: `Entrenador ${entrenador.nombre} asignado exitosamente a ${miembro.nombre}`,
-      miembro: miembroActualizado,
-      entrenador: entrenador
+      miembro,
+      membresias,
+      pagos,
+      asistencia
+
     };
-
-  } catch (error) {
-    throw new Error(`Error asignando entrenador: ${error.message}`);
   }
-}
 
-
-
-
-    async quitarEntrenador(miembroId) {
-        try {
-            //  Verificar que el miembro existe
-            const miembro = await this.buscarPorId(miembroId);
-
-            // Verificar que tiene entrenador asignado
-            if (!miembro.entrenador_id) {
-                throw new Error('El miembro no tiene entrenador asignado');
-            }
-        
-            const miembroActualizado = await MiembroModel.actualizarEntrenador(miembroId, null);
-
-            return {
-                mensaje: `Entrenador removido exitosamente de ${miembro.nombre}`,
-                miembro: miembroActualizado
-            };
-
-        } catch (error) {
-            throw new Error(`Error quitando entrenador: ${error.message}`);
-        }
+  static async registerFullMember(data, currentUserId) {
+    // Verificar que el cajero que registra es el mismo que está logueado
+    if (data.cashierId !== currentUserId) {
+      throw new Error("No puedes registrar un miembro en nombre de otro cajero.");
     }
 
-    
-    async listar() {
-        return await MiembroModel.listar();
+    const nuevoMiembro = new Miembro(data);
+    nuevoMiembro.validarParaRegistroCompleto();
+
+    if (nuevoMiembro.phone) {
+      const existe = await MemberModel.findByPhone(nuevoMiembro.phone);
+      if (existe) throw new Error("Ya existe un miembro registrado con ese número de teléfono.");
     }
 
-    
-    async buscarPorId(id) {
-        if (!id || id.length !== 6) {
-            throw new Error('ID inválido');
-        }
-        return await MiembroModel.buscarPorId(id);
-    }
+    // Invalidar caché después de crear
+    memberCache.del('all_members');
 
-    
-    
+    // Log de auditoría
+    await this._logAuditoria('CREATE_MEMBER', data, currentUserId);
 
-   async actualizar(id, data) {
-  try {
-    id = id.trim();
-    if (!id || id.length !== 6) throw new Error('ID inválido');
+    return await MemberModel.registerFullMember(data, currentUserId);
+  }
 
+  static async listarTodos() {
+    const cacheKey = 'all_members';
+    let cached = memberCache.get(cacheKey);
+
+    if (cached) return cached;
+
+    const datosCrudos = await MemberModel.listarTodos();
+    const result = datosCrudos.map(row => this._formatearRespuesta(row));
+
+    memberCache.set(cacheKey, result);
+    return result;
+  }
+
+  static async buscarPorId(id) {
+    const row = await MemberModel.buscarPorId(id);
+    if (!row) throw new Error("Miembro no encontrado");
+    return this._formatearRespuesta(row);
+  }
+
+  static async actualizar(id, data, currentUserId) {
+    const validador = new Miembro(data);
+    validador.validarDatosCore();
+
+    // Invalidar caché
+    memberCache.del('all_members');
+
+    // Log de auditoría
+    await this._logAuditoria('UPDATE_MEMBER', { id, ...data }, currentUserId);
+
+    return await MemberModel.actualizar(id, data);
+  }
+
+  static async eliminar(id, currentUserId) {
     const miembroActual = await this.buscarPorId(id);
 
-    let fechaVencimiento = miembroActual.fecha_vencimiento;
-
-    // Si se asigna un nuevo plan, recalcular vencimiento
-    if (data.plan_id && data.plan_id !== miembroActual.plan_id) {
-      const plan = await PlanModel.buscarPorId(data.plan_id);
-      if (!plan) throw new Error('El plan seleccionado no existe');
-
-      const hoy = new Date();
-      const vencimiento = new Date(hoy);
-      vencimiento.setDate(hoy.getDate() + plan.duracion_dias);
-      fechaVencimiento = vencimiento;
+    if (miembroActual.balance > 0) {
+      throw new Error(`No se puede desactivar a ${miembroActual.fullName} porque tiene una deuda pendiente de $${miembroActual.balance}.`);
     }
 
-    const updates = {
-      nombre: data.nombre ? data.nombre.trim() : miembroActual.nombre,
-      direccion: data.direccion ? data.direccion.trim() : miembroActual.direccion,
-      telefono: data.telefono ? data.telefono.trim() : miembroActual.telefono,
-      plan_id: data.plan_id || miembroActual.plan_id,
-      entrenadorId: data.entrenadorId || miembroActual.entrenadorId,
-      fechaVencimiento: fechaVencimiento,
-      estadoMembresia: data.estadoMembresia || miembroActual.estado_membresia,
+    // Invalidar caché
+    memberCache.del('all_members');
+
+    // Log de auditoría
+    await this._logAuditoria('DELETE_MEMBER', { id, fullName: miembroActual.fullName }, currentUserId);
+
+    return await MemberModel.eliminar(id);
+  }
+
+  static async _logAuditoria(accion, data, userId) {
+    // En producción, esto podría ir a una tabla de logs o a Winston
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      userId,
+      action: accion,
+      data: JSON.stringify(data)
     };
+    console.log('[AUDIT]', JSON.stringify(logEntry));
+  }
 
-    if (data.telefono && data.telefono !== miembroActual.telefono) {
-      const telefonoExiste = await MiembroModel.telefonoExiste(updates.telefono, id);
-      if (telefonoExiste) throw new Error('El teléfono ya está en uso');
-    }
+  static invalidarCache() {
+    memberCache.del('all_members');
+  }
 
-    return await MiembroModel.actualizar(id, updates);
 
-  } catch (error) {
-    throw error;
+  // services/MiembroServices.js (añadir al final de la clase)
+
+  static async obtenerResumen() {
+    const total = await MemberModel.contarTodos();
+    const activos = await MemberModel.contarActivos();
+    const proximosAVencer = await MemberModel.contarProximosAVencer(7);
+    const deudores = await MemberModel.contarDeudores();
+    return { total, activos, proximosAVencer, deudores };
+  }
+
+  static async obtenerDetalleCompleto(id) {
+   
+    const miembro = await MemberModel.buscarPorId(id);
+    if (!miembro) throw new Error('Miembro no encontrado');
+
+    const membresias = await MemberModel.obtenerMembresias(id);
+    const pagos = await MemberModel.obtenerPagos(id);
+    const asistencia = await MemberModel.obtenerAsistenciaUltimosDias(id, 30);
+
+    return { miembro, membresias, pagos, asistencia };
   }
 }
 
-
-    
-    async eliminar(id) {
-        if (!id || id.length !== 6) {
-            throw new Error('ID inválido');
-        }
-        return await MiembroModel.eliminar(id);
-    }
-}
-
-module.exports = new MiembroService();
+module.exports = MemberService;

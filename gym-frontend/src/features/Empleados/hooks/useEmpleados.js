@@ -1,62 +1,107 @@
 import { useState, useEffect, useCallback } from 'react';
-import { empleadosApi } from '../../../Api/EmpleadosApi';
+import { empleadoServices } from '../services/empleadoServices';
+import toast from 'react-hot-toast';
 
 export const useEmpleados = () => {
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadEmpleados = useCallback(async () => {
+  const cargarEmpleados = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await empleadosApi.getAll();
-   
-      const data = response.data || response; 
-      setEmpleados(Array.isArray(data) ? data : []);
+      const response = await empleadoServices.getAll();
+      setEmpleados(response.data.data);
+      setError(null);
     } catch (err) {
-      setError("Error al cargar empleados");
-      console.error(err);
+      const msg = err.response?.data?.message || 'Error al cargar empleados';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadEmpleados();
-  }, [loadEmpleados]);
+    cargarEmpleados();
+  }, [cargarEmpleados]);
 
-  const createEmpleado = async (data) => {
+  const crearEmpleado = async (data) => {
     try {
-      await empleadosApi.create(data);
-      loadEmpleados();
-      return true;
+      const response = await empleadoServices.create(data);
+      await cargarEmpleados();
+      toast.success('Empleado creado');
+      return response;
     } catch (err) {
+      const msg = err.response?.data?.message || 'Error al crear';
+      toast.error(msg);
       throw err;
     }
   };
 
-  const updateEmpleado = async (id, data) => {
+
+
+
+
+const actualizarEmpleado = async (id, data) => {
+  try {
+ 
+    const payload = {
+      nombre: data.nombre,
+      telefono: data.telefono || null,
+      roleId: data.roleId,
+      statusId: data.statusId ?? 1,
+    };
+
+  
+    if (data.roleId === 2) {
+      if (data.especialidad && data.especialidad.trim() !== '') {
+        payload.specialty = data.especialidad;
+      }
+      if (data.disponibilidad && data.disponibilidad.trim() !== '') {
+        payload.availability = data.disponibilidad;
+      }
+    }
+
+
+    if (data.password && data.password.trim() !== '') {
+      payload.password = data.password;
+    }
+
+    console.log('Enviando actualización:', payload);
+
+    const response = await empleadoServices.update(id, payload);
+    await cargarEmpleados();
+    toast.success('Empleado actualizado');
+    return response.data;
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Error al actualizar';
+    toast.error(msg);
+    console.error('Error en actualizarEmpleado:', err);
+    throw err;
+  }
+};
+
+  const desactivarEmpleado = async (id) => {
     try {
-      await empleadosApi.update(id, data);
-      loadEmpleados();
-      return true;
+      const response = await empleadoServices.delete(id);
+      await cargarEmpleados();
+      toast.success('Empleado desactivado');
+      return response.data;
     } catch (err) {
+      const msg = err.response?.data?.message || 'Error al desactivar';
+      toast.error(msg);
       throw err;
     }
   };
 
-  const deleteEmpleado = async (id) => {
-    try {
-      await empleadosApi.delete(id);
-      loadEmpleados();
-      return true;
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  return { 
-    empleados, loading, error, 
-    createEmpleado, updateEmpleado, deleteEmpleado, refreshEmpleados: loadEmpleados 
+  return {
+    empleados,
+    loading,
+    error,
+    crearEmpleado,
+    actualizarEmpleado,
+    desactivarEmpleado,
+    recargar: cargarEmpleados,
   };
 };

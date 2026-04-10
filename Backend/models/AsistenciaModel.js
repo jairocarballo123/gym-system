@@ -1,197 +1,185 @@
-// models/asistenciaModel.js
-const pool = require('../DB/db');
+// models/Asistencia.model.js
+const { getConnection, sql } = require('../config/db');
 
 class AsistenciaModel {
-  
-  // 📌 CREAR REGISTRO DE ASISTENCIA
-  static async crear(asistenciaData) {
-    try {
-      const query = `
-        INSERT INTO Asistencia (miembro_id, fecha_entrada)
-        VALUES ($1, $2)
-        RETURNING *
-      `;
-      const values = [
-        asistenciaData.miembro_id,
-        asistenciaData.fecha_entrada
-      ];
-      
-      const result = await pool.query(query, values);
-      return result.rows[0];
 
-    } catch (error) {
-      // Manejo específico de errores de PostgreSQL
-      if (error.code === '23503') { // Violación de llave foránea
-        throw new Error(`El miembro con ID ${asistenciaData.miembro_id} no existe`);
-      } else if (error.code === '23505') { // Violación de unique
-        throw new Error('Registro duplicado');
-      } else {
-        throw new Error(`Error de base de datos: ${error.message}`);
-      }
+  static async registrarEntrada(memberId, userId) {
+  try {
+    const pool = await getConnection();
+
+    // Ejecutar la función con el esquema GYM_OPERATIONS
+    const accesoResult = await pool.request()
+      .input('MemberId', sql.Int, memberId)
+      .query('SELECT GYM_OPERATIONS.Fn_HasActiveMembership(@MemberId) AS tieneAcceso');
+    
+    const tieneAcceso = accesoResult.recordset[0].tieneAcceso;
+
+    if (!tieneAcceso) {
+      throw new Error('El miembro no tiene una membresía activa');
     }
+
+    // Registrar asistencia
+    await pool.request()
+      .input('MemberId', sql.Int, memberId)
+      .input('AccessGranted', sql.Bit, 1)
+      .input('RegisteredBy', sql.Int, userId)
+      .query(`
+        INSERT INTO GYM_OPERATIONS.Tbl_Attendance (MemberId, AccessDate, AccessGranted, RegisteredBy)
+        VALUES (@MemberId, GETDATE(), @AccessGranted, @RegisteredBy)
+      `);
+
+    return { success: true, message: 'Entrada registrada correctamente' };
+  } catch (error) {
+    throw new Error(`: ${error.message}`);
   }
-
-  // 📌 LISTAR TODAS LAS ASISTENCIAS
-  static async listar() {
+}
+  static async obtenerAsistenciasHoy() {
     try {
-      const query = `
-        SELECT a.*, m.nombre as miembro_nombre
-        FROM Asistencia a
-        JOIN Miembro m ON a.miembro_id = m.id
-        ORDER BY a.fecha_entrada DESC
-      `;
-      
-      const result = await pool.query(query);
-      return result.rows;
-
-    } catch (error) {
-      throw new Error(`Error al listar asistencias: ${error.message}`);
-    }
-  }
-
-  // 📌 BUSCAR ASISTENCIAS POR MIEMBRO
-  static async buscarPorMiembro(miembroId) {
-    try {
-      const query = `
-        SELECT a.*, m.nombre as miembro_nombre
-        FROM Asistencia a
-        JOIN Miembro m ON a.miembro_id = m.id
-        WHERE a.miembro_id = $1
-        ORDER BY a.fecha_entrada DESC
-      `;
-      
-      const result = await pool.query(query, [miembroId]);
-      
-      if (result.rows.length === 0) {
-        throw new Error(`No se encontraron asistencias para el miembro ${miembroId}`);
-      }
-      
-      return result.rows;
-
-    } catch (error) {
-      if (error.message.includes('No se encontraron')) {
-        throw error; // Mantener error específico de "no encontrado"
-      }
-      throw new Error(`Error al buscar asistencias por miembro: ${error.message}`);
-    }
-  }
-
-  // 📌 BUSCAR ASISTENCIAS POR FECHA
-  static async buscarPorFecha(fecha) {
-    try {
-      const query = `
-        SELECT a.*, m.nombre as miembro_nombre
-        FROM Asistencia a
-        JOIN Miembro m ON a.miembro_id = m.id
-        WHERE DATE(a.fecha_entrada) = $1
-        ORDER BY a.fecha_entrada DESC
-      `;
-      
-      const result = await pool.query(query, [fecha]);
-      
-      if (result.rows.length === 0) {
-        throw new Error(`No se encontraron asistencias para la fecha ${fecha}`);
-      }
-      
-      return result.rows;
-
-    } catch (error) {
-      if (error.message.includes('No se encontraron')) {
-        throw error; // Mantener error específico
-      }
-      throw new Error(`Error al buscar asistencias por fecha: ${error.message}`);
-    }
-  }
-
-  // 📌 OBTENER ASISTENCIAS DE HOY
-  static async asistenciasHoy() {
-    try {
-      const query = `
-        SELECT a.*, m.nombre as miembro_nombre
-        FROM Asistencia a
-        JOIN Miembro m ON a.miembro_id = m.id
-        WHERE DATE(a.fecha_entrada) = CURRENT_DATE
-        ORDER BY a.fecha_entrada DESC
-      `;
-      
-      const result = await pool.query(query);
-      return result.rows;
-
-    } catch (error) {
-      throw new Error(`Error al obtener asistencias de hoy: ${error.message}`);
-    }
-  }
-
-  // 📌 ELIMINAR REGISTRO DE ASISTENCIA
-  static async eliminar(id) {
-    try {
-  
-      const verificarQuery = 'SELECT id FROM Asistencia WHERE id = $1';
-      const verificarResult = await pool.query(verificarQuery, [id]);
-      
-      if (verificarResult.rows.length === 0) {
-        throw new Error(`No se encontró la asistencia con ID ${id}`);
-      }
-
-      const deleteQuery = 'DELETE FROM Asistencia WHERE id = $1';
-      await pool.query(deleteQuery, [id]);
-      
-      return { 
-        mensaje: 'Asistencia eliminada correctamente',
-        id_eliminado: id
-      };
-
-    } catch (error) {
-      if (error.message.includes('No se encontró')) {
-        throw error;
-      }
-      throw new Error(`Error al eliminar asistencia: ${error.message}`);
-    }
-  }
-
-  // 📌 OBTENER ESTADÍSTICAS AVANZADAS
-  static async obtenerEstadisticasCompletas() {
-    try {
-      const queries = {
-        totalAsistencias: `
-          SELECT COUNT(*) as total FROM Asistencia
-        `,
-        asistenciasHoy: `
-          SELECT COUNT(*) as hoy FROM Asistencia 
-          WHERE DATE(fecha_entrada) = CURRENT_DATE
-        `,
-        miembrosUnicos: `
-          SELECT COUNT(DISTINCT miembro_id) as unicos FROM Asistencia
-        `,
-        topMiembros: `
-          SELECT miembro_id, COUNT(*) as asistencias
-          FROM Asistencia 
-          GROUP BY miembro_id 
-          ORDER BY asistencias DESC 
-          LIMIT 5
-        `,
-        asistenciasPorMes: `
+      const pool = await getConnection();
+      const result = await pool.request()
+        .query(`
           SELECT 
-            TO_CHAR(fecha_entrada, 'YYYY-MM') as mes,
-            COUNT(*) as asistencias
-          FROM Asistencia
-          GROUP BY TO_CHAR(fecha_entrada, 'YYYY-MM')
-          ORDER BY mes DESC
-          LIMIT 6
-        `
-      };
-
-      const resultados = {};
-      
-      for (const [key, query] of Object.entries(queries)) {
-        const result = await pool.query(query);
-        resultados[key] = result.rows;
-      }
-
-      return resultados;
-
+            a.AttendanceId,
+            m.MemberId,
+            m.FullName AS nombre,
+            CONVERT(TIME, a.AccessDate) AS hora,
+            a.AccessDate AS fecha
+          FROM GYM_OPERATIONS.Tbl_Attendance a
+          INNER JOIN GYM_OPERATIONS.Tbl_Members m ON a.MemberId = m.MemberId
+          WHERE CAST(a.AccessDate AS DATE) = CAST(GETDATE() AS DATE)
+          ORDER BY a.AccessDate DESC
+        `);
+      return result.recordset;
     } catch (error) {
-      throw new Error(`Error al obtener estadísticas: ${error.message}`);
+      throw new Error(`Error BD (obtenerAsistenciasHoy): ${error.message}`);
+    }
+  }
+
+  
+  static async obtenerHistorialPorMiembro(memberId, limite = 30) {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request()
+        .input('memberId', sql.Int, memberId)
+        .input('limite', sql.Int, limite)
+        .query(`
+          SELECT TOP (@limite)
+            AttendanceId,
+            AccessDate AS fecha,
+            AccessGranted
+          FROM GYM_OPERATIONS.Tbl_Attendance
+          WHERE MemberId = @memberId
+          ORDER BY AccessDate DESC
+        `);
+      return result.recordset;
+    } catch (error) {
+      throw new Error(`Error BD (obtenerHistorialPorMiembro): ${error.message}`);
+    }
+  }
+
+  static async obtenerHoraPico() {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request()
+        .query(`
+          SELECT TOP 1
+            DATEPART(HOUR, AccessDate) AS hora,
+            COUNT(*) AS total
+          FROM GYM_OPERATIONS.Tbl_Attendance
+          WHERE CAST(AccessDate AS DATE) = CAST(GETDATE() AS DATE)
+          GROUP BY DATEPART(HOUR, AccessDate)
+          ORDER BY total DESC
+        `);
+      return result.recordset[0] || { hora: null, total: 0 };
+    } catch (error) {
+      throw new Error(`Error BD (obtenerHoraPico): ${error.message}`);
+    }
+  }
+
+
+  static async obtenerPromedioDiario() {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request()
+        .query(`
+          SELECT 
+            COUNT(DISTINCT CAST(AccessDate AS DATE)) AS dias_con_asistencia,
+            COUNT(*) AS total_asistencias,
+            ROUND(CAST(COUNT(*) AS FLOAT) / NULLIF(COUNT(DISTINCT CAST(AccessDate AS DATE)), 0), 1) AS promedio_diario
+          FROM GYM_OPERATIONS.Tbl_Attendance
+          WHERE MONTH(AccessDate) = MONTH(GETDATE()) 
+            AND YEAR(AccessDate) = YEAR(GETDATE())
+        `);
+      return result.recordset[0] || { dias_con_asistencia: 0, total_asistencias: 0, promedio_diario: 0 };
+    } catch (error) {
+      throw new Error(`Error BD (obtenerPromedioDiario): ${error.message}`);
+    }
+  }
+
+
+  static async obtenerDiasMasAfluencia() {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request()
+        .query(`
+          SELECT TOP 5
+            DATENAME(WEEKDAY, AccessDate) AS dia_semana,
+            COUNT(*) AS total_asistencias
+          FROM GYM_OPERATIONS.Tbl_Attendance
+          WHERE AccessDate >= DATEADD(day, -30, GETDATE())
+          GROUP BY DATENAME(WEEKDAY, AccessDate), DATEPART(WEEKDAY, AccessDate)
+          ORDER BY total_asistencias DESC
+        `);
+      return result.recordset;
+    } catch (error) {
+      throw new Error(`Error BD (obtenerDiasMasAfluencia): ${error.message}`);
+    }
+  }
+
+  static async obtenerMiembrosInactivos() {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request()
+        .query(`
+          SELECT 
+            m.MemberId,
+            m.FullName,
+            m.Phone,
+            CAST(MAX(a.AccessDate) AS DATE) AS ultima_asistencia
+          FROM GYM_OPERATIONS.Tbl_Members m
+          LEFT JOIN GYM_OPERATIONS.Tbl_Attendance a ON m.MemberId = a.MemberId
+          WHERE m.StatusId = 1
+          GROUP BY m.MemberId, m.FullName, m.Phone
+          HAVING MAX(a.AccessDate) < DATEADD(day, -15, GETDATE()) 
+             OR MAX(a.AccessDate) IS NULL
+          ORDER BY ultima_asistencia ASC
+        `);
+      return result.recordset;
+    } catch (error) {
+      throw new Error(`Error BD (obtenerMiembrosInactivos): ${error.message}`);
+    }
+  }
+
+ 
+  static async obtenerTopActivos(limite = 5) {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request()
+        .input('limite', sql.Int, limite)
+        .query(`
+          SELECT TOP (@limite)
+            m.MemberId,
+            m.FullName,
+            COUNT(a.AttendanceId) AS total_asistencias
+          FROM GYM_OPERATIONS.Tbl_Members m
+          INNER JOIN GYM_OPERATIONS.Tbl_Attendance a ON m.MemberId = a.MemberId
+          WHERE a.AccessDate >= DATEADD(day, -30, GETDATE())
+          GROUP BY m.MemberId, m.FullName
+          ORDER BY total_asistencias DESC
+        `);
+      return result.recordset;
+    } catch (error) {
+      throw new Error(`Error BD (obtenerTopActivos): ${error.message}`);
     }
   }
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { FaUserCog, FaMoon, FaBell, FaVolumeUp, FaDatabase, FaSignOutAlt, FaInfoCircle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
-import { useAuth } from '../../Hooks/useauth'; 
+import { useAuth } from '../auth/hooks/useAuth'; 
 
 const Configuracion = () => {
   const { user, logout } = useAuth(); 

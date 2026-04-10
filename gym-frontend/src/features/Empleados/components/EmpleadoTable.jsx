@@ -1,70 +1,74 @@
+// src/features/Empleados/components/EmpleadoTable.jsx
 import React from 'react';
-import { Table, Button, Badge } from 'react-bootstrap';
-import { FaEdit, FaTrash, FaUserShield, FaDumbbell } from 'react-icons/fa';
+import { Table, Badge, Button } from 'react-bootstrap';
+import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const EmpleadoTable = ({ empleados, onEdit, onDelete }) => {
-  // Función auxiliar para pintar el badge del rol
-  const getRoleBadge = (rol) => {
-    switch(rol) {
-        case 'admin': return <Badge bg="danger"><FaUserShield className="me-1"/>Admin</Badge>;
-        case 'entrenador': return <Badge bg="primary"><FaDumbbell className="me-1"/>Coach</Badge>;
-        default: return <Badge bg="secondary">{rol}</Badge>;
-    }
+  const navigate = useNavigate();
+
+  const verDetalle = (id) => {
+    navigate(`/empleados/${id}`);
   };
 
   return (
-    <div className="table-responsive">
-      <Table hover className="align-middle mb-0">
-        <thead className="bg-light">
-          <tr className="text-muted text-uppercase small">
-            <th>Nombre / ID</th>
-            <th>Rol</th>
-            <th>Contacto</th>
-            <th>Especialidad / Dispon.</th>
-            <th>Estado</th>
-             <th>Fecha ingreso</th>
-            <th className="text-end">Acciones</th>
+    <Table striped bordered hover responsive className="align-middle">
+      <thead className="bg-light">
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {empleados.map((emp) => (
+          <tr key={emp.id}>
+            <td>{emp.id}</td>
+            <td>{emp.nombre}</td>
+            <td>{emp.telefono || '—'}</td>
+            <td>
+              {emp.roleId === 1 ? 'Admin' : emp.roleId === 2 ? 'Entrenador' : 'Recepcionista'}
+            </td>
+            <td>
+              <Badge bg={emp.statusId === 1 ? 'success' : 'danger'}>
+                {emp.statusId === 1 ? 'Activo' : 'Inactivo'}
+              </Badge>
+            </td>
+            <td>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                className="me-1"
+                onClick={() => verDetalle(emp.id)}
+                title="Ver detalle"
+              >
+                <FaEye />
+              </Button>
+              <Button
+                variant="outline-warning"
+                size="sm"
+                className="me-1"
+                onClick={() => onEdit(emp)}
+                title="Editar"
+              >
+                <FaEdit />
+              </Button>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={() => onDelete(emp)}
+                title="Desactivar"
+              >
+                <FaTrash />
+              </Button>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {empleados.length === 0 && (
-            <tr><td colSpan="6" className="text-center py-5 text-muted">No hay empleados registrados.</td></tr>
-          )}
-
-          {empleados.map((e) => (
-            <tr key={e.id}>
-              <td>
-                <div className="fw-bold">{e.nombre}</div>
-                <div className="small text-muted">ID: {e.id}</div>
-              </td>
-              <td>{getRoleBadge(e.rol)}</td>
-              <td>{e.telefono}</td>
-              <td>
-                <div className="small fw-bold">{e.especialidad || '-'}</div>
-                <div className="small text-muted fst-italic ">{e.disponibilidad}</div>
-              </td>
-              <td>
-                <Badge bg={e.activo ? 'success' : 'dark'}>
-                  {e.activo ? 'activo' : 'inactivo'}
-                </Badge>
-              </td>
-
-              <td>
-                {e.fecha_ingreso}
-              </td>
-              <td className="text-end">
-                <Button variant="light" size="sm" className="me-2 text-primary" onClick={() => onEdit(e)}>
-                  <FaEdit />
-                </Button>
-                <Button variant="light" size="sm" className="text-danger" onClick={() => onDelete(e.id)}>
-                  <FaTrash />
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
+        ))}
+      </tbody>
+    </Table>
   );
 };
 

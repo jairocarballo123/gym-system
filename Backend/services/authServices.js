@@ -1,41 +1,22 @@
+// services/authServices.js
+const EmpleadoModel = require('../models/EmpleadoModel');
+const bcrypt = require('bcryptjs');
+const { generateToken } = require('../utils/jwt.utils'); // ← Importas desde utils
 
-const empleadoModel = require('../models/EmpleadoModel');
-const jwt = require('jsonwebtoken');
+const login = async (nombre, passwordPlano) => {
+    const empleado = await EmpleadoModel.findByNombre(nombre);
+    if (!empleado) throw new Error('Credenciales inválidas');
 
+    const isMatch = await bcrypt.compare(passwordPlano, empleado.PasswordHash);
+    if (!isMatch) throw new Error('Credenciales inválidas');
 
-const login = async (idEmpleado, password) => {
-    
-    
-    if (!process.env.JWT_SECRET) {
-        throw new Error("ERROR CRÍTICO: JWT_SECRET no configurado.");
-    }
+    // Usas la función del utils
+    const token = generateToken({ 
+        id: empleado.EmployeeId, 
+        roleId: empleado.RoleId 
+    });
 
-    
-    const empleado = await empleadoModel.buscarPorId(idEmpleado);
-    
-    if (!empleado) {
-        throw new Error('El ID de empleado no existe.'); 
-    }
-
-    if (password !== empleado.password) {
-        throw new Error('Contraseña incorrecta.');
-    }
-
-  
-    const token = jwt.sign(
-        { 
-            id: empleado.id, 
-            rol: empleado.rol, 
-            nombre: empleado.nombre 
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: '8h' }
-    );
-
-
-    const { password: _, ...usuarioSinPass } = empleado;
-    
-    return { token, user: usuarioSinPass };
+    return { token, user: empleado };
 };
 
 module.exports = { login };

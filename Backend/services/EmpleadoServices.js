@@ -1,124 +1,82 @@
-// services/EmpleadoServices.js
-const Empleado = require('../Entidades/Empleado'); 
+// services/EmpleadoService.js
 const EmpleadoModel = require('../models/EmpleadoModel');
+const Empleado = require('../Entidades/Empleado');
+const bcrypt = require('bcryptjs');
+const NodeCache = require('node-cache');
+const empleadoCache = new NodeCache({ stdTTL: 300 }); // 5 minutos
 
-const EmpleadoService = {
+class EmpleadoService {
+
+  static async obtenerEmpleados() {
+    const cacheKey = 'all_empleados';
+    let cached = empleadoCache.get(cacheKey);
+    if (cached) return cached;
+
+    const empleados = await EmpleadoModel.listar();
+    empleadoCache.set(cacheKey, empleados);
+    return empleados;
+  }
+
+  static async listarEntrenadores() {
+    const cacheKey = 'all_entrenadores';
+    let cached = empleadoCache.get(cacheKey);
+    if (cached) return cached;
+
+    const entrenadores = await EmpleadoModel.listarEntrenadores();
+    empleadoCache.set(cacheKey, entrenadores);
+    return entrenadores;
+  }
+
+ 
+
+  static async crearEmpleado(data) {
+    const nuevoEmpleado = new Empleado(data);
+    nuevoEmpleado.validarDatos();
+
+    if (nuevoEmpleado.password) {
+      const salt = await bcrypt.genSalt(10);
+      nuevoEmpleado.password = await bcrypt.hash(nuevoEmpleado.password, salt);
+    }
+
+    const resultado = await EmpleadoModel.crear(nuevoEmpleado);
+
+    empleadoCache.del('all_empleados');
+    empleadoCache.del('all_entrenadores');
+    return resultado;
+  }
+
+  static async obtenerEmpleadoPorNombre(nombre) {
+
+    return await EmpleadoModel.findByNombre(nombre);
+  }
+
+  static async obtenerEmpleadoPorId(id) {
+
+    return await EmpleadoModel.findById(id);
+  }
+
   
-  async registrar(data) {
-    try {
-     
-      const nuevoEmpleado = new Empleado(
-        data.nombre,
-        data.rol,
-        data.telefono,
-        data.especialidad,
-        data.disponibilidad, 
-        data.activo,
-        data.password
-      );
 
-    
-      nuevoEmpleado.validarDatos();
+  
 
-      const empleadoGuardado = await EmpleadoModel.crear(nuevoEmpleado);
-      
-      return empleadoGuardado;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
+  static async actualizarEmpleado(id, data) {
+    const empleadoActualizado = new Empleado(data);
+    empleadoActualizado.id = id;
+    empleadoActualizado.validarDatos();
 
-  async listar() {
-    try {
-      return await EmpleadoModel.listar();
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-
-  async buscarPorId(id) {
-    try {
-      const empleado = await EmpleadoModel.buscarPorId(id);
-      if (!empleado) {
-        throw new Error('Empleado no encontrado');
-      }
-      return empleado;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-
-  async actualizar(id, data) {
-  try {
-    const existe = await EmpleadoModel.buscarPorId(id);
-    if (!existe) throw new Error('Empleado no encontrado');
-
-    
-    const datosActualizados = {
-      ...existe,   
-      ...data      
-    };
-
-    return await EmpleadoModel.actualizar(id, datosActualizados);
-  } catch (error) {
-    throw new Error(error.message);
+    const resultado = await EmpleadoModel.actualizar(id, empleadoActualizado);
+    // Invalidar caché
+    empleadoCache.del('all_empleados');
+    empleadoCache.del('all_entrenadores');
+    return resultado;
   }
-},
 
-
-  async eliminar(id) {
-    try {
-      return await EmpleadoModel.eliminar(id);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-
-  async buscarPorRol(rol) {
-    try {
-      // Pequeña validación antes de ir a la BD
-      const rolesPermitidos = ['entrenador', 'recepcionista', 'admin', 'nutriologo', 'fisioterapeuta'];
-      if (!rolesPermitidos.includes(rol.toLowerCase())) {
-        throw new Error('Rol no válido para búsqueda');
-      }
-      return await EmpleadoModel.buscarPorRol(rol);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-
-  async obtenerMiembrosAsignados(id) {
-    try {
-      // Primero verificamos si el empleado es entrenador
-      const empleado = await EmpleadoModel.buscarPorId(id);
-      if (!empleado) throw new Error('Empleado no encontrado');
-      
-      if (empleado.rol !== 'entrenador') {
-        throw new Error('Este empleado no es un entrenador, no tiene miembros asignados.');
-      }
-
-      return await EmpleadoModel.obtenerMiembrosAsignados(id);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-
-  async buscarPorNombre(nombre) {
-  try {
-    if (!nombre || nombre.trim().length < 2) {
-      throw new Error('Escribe al menos 2 letras para buscar');
-    }
-
-    // Llamamos al método del modelo corregido
-    const empleados = await EmpleadoModel.obtenerEmpleadosPorNombre(nombre.trim());
-
-    return empleados; 
-
-  } catch (error) {
-    throw new Error(error.message);
+  static async desactivarEmpleado(id) {
+    const resultado = await EmpleadoModel.desactivar(id);
+    empleadoCache.del('all_empleados');
+    empleadoCache.del('all_entrenadores');
+    return resultado;
   }
-},
-
-};
+}
 
 module.exports = EmpleadoService;

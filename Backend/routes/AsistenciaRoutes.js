@@ -1,36 +1,18 @@
-// routes/asistenciaRoutes.js
+// routes/Asistencia.routes.js
 const express = require('express');
 const router = express.Router();
+const AsistenciaController = require('../controllers/AsistenciaController');
 
-const {
-  registrarEntrada,
-  listarAsistencias,
-  buscarAsistenciasPorMiembro,
-  buscarAsistenciasPorFecha,
-  obtenerEstadisticas,
-  eliminarAsistencia
-} = require('../controllers/AsistenciaController');
 
-// 📌 RUTAS PRINCIPALES
+router.post('/registrar', AsistenciaController.registrarEntrada);
 
-// Registrar nueva entrada de asistencia
-router.post('/', registrarEntrada);
 
-// Listar todas las asistencias
-router.get('/', listarAsistencias);
-
-// Obtener estadísticas de asistencias
-router.get('/estadisticas', obtenerEstadisticas);
-
-// 📌 RUTAS ESPECÍFICAS
-
-// Buscar asistencias por miembro
-router.get('/miembro/:miembroId', buscarAsistenciasPorMiembro);
-
-// Buscar asistencias por fecha (formato: YYYY-MM-DD)
-router.get('/fecha/:fecha', buscarAsistenciasPorFecha);
-
-// Eliminar registro de asistencia
-router.delete('/:id', eliminarAsistencia);
+router.get('/hoy', AsistenciaController.obtenerAsistenciasHoy);
+router.get('/hora-pico', AsistenciaController.obtenerHoraPico);
+router.get('/promedio-diario', AsistenciaController.obtenerPromedioDiario);
+router.get('/dias-afluencia', AsistenciaController.obtenerDiasMasAfluencia);
+router.get('/miembros-inactivos', AsistenciaController.obtenerMiembrosInactivos);
+router.get('/top-activos', AsistenciaController.obtenerTopActivos);
+router.get('/miembro/:id', AsistenciaController.obtenerHistorialPorMiembro);
 
 module.exports = router;

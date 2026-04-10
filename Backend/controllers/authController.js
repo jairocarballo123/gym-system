@@ -2,39 +2,30 @@ const authService = require('../services/authServices');
 
 const login = async (req, res) => {
     try {
-        const { id, password } = req.body;
+        const { nombre, password } = req.body;
 
-        if (!id || !password) {
-            return res.status(400).json({
-                message: "Faltan datos requeridos (id, password)"
-            });
+        if (!nombre || !password) {
+            return res.status(400).json({ message: "Faltan datos" });
         }
 
-
-        const result = await authService.login(id, password);
-
+        const result = await authService.login(nombre, password);
 
         return res.status(200).json({
-            message: "Bienvenido al sistema",
+            message: "Login exitoso",
             token: result.token,
-            user: result.user
+            user: {
+                id: result.user.EmployeeId,
+                nombre: result.user.FullName,
+                rol: result.user.RoleId
+            }
         });
 
     } catch (error) {
-
-        console.error(`[AuthError]: ${error.message}`);
-        
-        if (error.message === 'CREDS_INVALIDAS' || error.message.includes('Acceso denegado')) {
-            return res.status(401).json({ message: "Usuario o contraseña incorrectos." });
+        console.error(error);
+        if (error.message === 'CREDS_INVALIDAS') {
+            return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
         }
-
-    
-        return res.status(500).json({ 
-            message: "Error interno",
-            errorReal: error.message,  
-            stack: error.stack         
-        });
-      
+        return res.status(500).json({ message: "Error interno" });
     }
 };
 

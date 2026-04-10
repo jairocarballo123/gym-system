@@ -1,71 +1,39 @@
+// entities/Empleado.js
 class Empleado {
-  constructor(nombre, rol, telefono, especialidad, disponibilidad, activo, password) {
-    this.id = this.generarIdUnico(); 
-    this.nombre = nombre;
-    this.telefono = telefono;
-    this.rol = rol;
-    this.especialidad = especialidad;
-    this.disponibilidad = disponibilidad || 'disponible';
-    this.fecha_ingreso = new Date().toISOString().split('T')[0];  
-    this.activo = activo || 'activo';
-    this.password = password;  
-  }
-
-  generarIdUnico() {
-    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let id = 'EMP';
-    for (let i = 0; i < 5; i++) {
-      const randomIndex = Math.floor(Math.random() * caracteres.length);
-      id += caracteres[randomIndex];
-    }
-    return id;
+  constructor(data) {
+    this.id = data.id || null;
+    this.nombre = data.nombre || data.fullName;
+    this.telefono = data.telefono || data.phone;
+    this.roleId = data.roleId;
+    this.specialty = data.specialty || null;
+    this.availability = data.availability || null;
+    this.statusId = data.statusId ?? 1;
+    this.password = data.password || null;
   }
 
   validarDatos() {
     const errores = [];
-
-    // Validar nombre
-    if (!this.nombre || this.nombre.trim().length < 2) {
-      errores.push('Nombre debe tener al menos 2 caracteres');
+    if (!this.nombre || this.nombre.length < 3) {
+      errores.push('El nombre debe tener al menos 3 caracteres');
     }
-
-    // Validar rol 
-    const rolesPermitidos = ['entrenador', 'recepcionista', 'admin', 'nutriologo', 'fisioterapeuta'];
-    if (!rolesPermitidos.includes(this.rol)) {
-      errores.push(`Rol debe ser uno de: ${rolesPermitidos.join(',')}`);
+    // Solo exigir especialidad si es entrenador (roleId = 2)
+    if (this.roleId === 2 && !this.specialty) {
+      errores.push('La especialidad es obligatoria para entrenadores');
     }
-
-    // Validar teléfono
-    if (this.telefono && this.telefono.length < 8) {
-      errores.push('Teléfono debe tener al menos 8 dígitos');
-    }
-
-    // Validar disponibilidad (USANDO LOS VALORES DE TU BD)
-    const disponibilidadesPermitidas = ['disponible', 'ocupado', 'vacaciones', 'enfermedad'];
-    if (!disponibilidadesPermitidas.includes(this.disponibilidad)) {
-      errores.push('Disponibilidad no válida');
-    }
-
-   
-    const estadosPermitidos = ['activo', 'inactivo'];  
-    if (!estadosPermitidos.includes(this.activo)) {
-      errores.push('Estado activo debe ser: activo o inactivo');  
-    }
-
-    // Validar especialidad según el rol
-    if (this.rol === 'entrenador' && !this.especialidad) {
-      errores.push('Los entrenadores deben tener una especialidad');
-    }
-
-    if (this.rol === 'admin' && !this.password) {
-      errores.push('contraseña para los admin es obligatoria');
-    }
-
-    if (errores.length > 0) {
-      throw new Error(errores.join(', '));
-    }
-
+    if (errores.length) throw new Error(errores.join(' | '));
     return true;
+  }
+
+  toDatabase() {
+    return {
+      FullName: this.nombre,
+      Phone: this.telefono,
+      RoleId: this.roleId,
+      StatusId: this.statusId,
+      Specialty: this.specialty,
+      Availability: this.availability,
+      PasswordHash: this.password
+    };
   }
 }
 

@@ -1,14 +1,18 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import './index.css';
-import App from './App.jsx';
-import 'bootstrap/dist/css/bootstrap.min.css';
+// main.jsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'  // ← IMPORTACIÓN CORRECTA
+import App from './App'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import './index.css'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider>  {/* ← AQUÍ DEBE ESTAR ENVOLVIENDO TODO */}
+        <App />
+      </AuthProvider>
     </BrowserRouter>
-  </StrictMode>
-);
+  </React.StrictMode>
+)

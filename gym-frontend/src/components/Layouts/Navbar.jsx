@@ -1,19 +1,21 @@
-import { Navbar, Container, Nav, Dropdown } from "react-bootstrap";
-import { FaUserCircle, FaBell } from "react-icons/fa";
-import { useAuth } from "../../Hooks/useauth";
+import { Navbar, Container, Nav, Dropdown, Badge } from "react-bootstrap";
+import { FaUserCircle, FaBell, FaSignOutAlt, FaUser } from "react-icons/fa";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 
 const Topbar = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const titles = {
-    "/": "Dashboard",
+    "/": "dashboard",
+    "/recepcion": "Recepción / Ventas",
     "/miembros": "Gestión de Miembros",
-     "/Empleados": "Gestión de Empleados",
-      "/planes": "Gestión de planes",
+    "/empleados": "Gestión de Empleados",
+    "/planes": "Gestión de Planes",
+    "/Stock": "Gestion de stock",
     "/pagos": "Gestión de Pagos",
     "/asistencias": "Control de Asistencias",
     "/configuracion": "Configuración",
@@ -25,39 +27,53 @@ const Topbar = () => {
   };
 
   return (
-    <Navbar bg="light" expand="lg" className="shadow-sm border-bottom w-100">
-      <Container className="contenedor-topbar">
-        <Navbar.Brand className="fw-bold text-dark ms-2">
+    <Navbar bg="white" expand="lg" className="shadow-sm border-bottom py-2 w-100">
+      <Container fluid className="px-4">
+        <Navbar.Brand className="fw-bold text-primary fs-4">
           {titles[location.pathname] || "Gym System"}
         </Navbar.Brand>
 
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Toggle aria-controls="topbar-nav" />
 
-        <Navbar.Collapse id="basic-navbar-nav" className="justify-content-end pl-2">
-          <Nav className="align-items-center">
-            <Nav.Link className="me-3 position-relative text-secondary">
-              <FaBell size={15} />
-              <span className="position-absolute top-10 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                <span className="visually-hidden">New alerts</span>
-              </span>
+        <Navbar.Collapse id="topbar-nav" className="justify-content-end">
+          <Nav className="align-items-center gap-3">
+            {/* Notificaciones */}
+            <Nav.Link className="position-relative text-secondary p-0">
+              <FaBell size={18} />
+              <Badge 
+                pill 
+                bg="danger" 
+                className="position-absolute top-0 start-100 translate-middle p-1 border border-light rounded-circle"
+                style={{ fontSize: '0.6rem' }}
+              >
+                <span className="visually-hidden">notificaciones</span>
+              </Badge>
             </Nav.Link>
 
+            {/* Dropdown usuario */}
             <Dropdown align="end">
               <Dropdown.Toggle
-                variant="light"
-                id="dropdown-basic"
-                className="d-flex align-items-center border-0 bg-transparent"
+                as="div"
+                id="user-dropdown"
+                className="d-flex align-items-center gap-2 text-dark text-decoration-none cursor-pointer"
+                style={{ cursor: 'pointer' }}
               >
-                <FaUserCircle size={15} className="me-2 text-primary" />
-                <span className="fw-semibold">Admin</span>
+                <FaUserCircle size={28} className="text-primary" />
+                <span className="fw-semibold d-none d-md-block">
+                  {user?.nombre || "Usuario"}
+                </span>
               </Dropdown.Toggle>
 
-              <Dropdown.Menu>
-                <Dropdown.Item>Mi Perfil</Dropdown.Item>
-                <Dropdown.Item>Configuración</Dropdown.Item>
+              <Dropdown.Menu className="shadow-sm mt-2">
+                <Dropdown.Item>
+                  <FaUser className="me-2" /> Mi Perfil
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <FaBell className="me-2" /> Notificaciones
+                </Dropdown.Item>
                 <Dropdown.Divider />
                 <Dropdown.Item onClick={handleLogout} className="text-danger">
-                  Cerrar Sesión
+                  <FaSignOutAlt className="me-2" /> Cerrar Sesión
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
