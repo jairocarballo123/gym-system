@@ -1,84 +1,86 @@
+// src/components/layout/Sidebar.jsx
 import React from 'react';
 import { Nav } from 'react-bootstrap';
 import { NavLink } from 'react-router-dom';
 import { 
-  FaHome, FaUsers, FaCreditCard, FaClock, FaCog, FaDumbbell, 
-  FaClipboardList, FaHandHoldingUsd 
+  FaHome, FaUsers, FaCreditCard, FaUserTie, FaCog, FaDumbbell, 
+  FaClipboardList, FaHandHoldingUsd, FaBoxes, FaLayerGroup 
 } from 'react-icons/fa';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const Sidebar = () => {
   const { user } = useAuth();
 
+  // Mapeo unificado de rutas e íconos exactos coincidentes con el Dashboard
+  const enlacesNav = [
+    { to: "/dashboard", label: "Dashboard", icon: <FaHome /> },
+    { to: "/recepcion", label: "Recepción / Ventas", icon: <FaHandHoldingUsd /> },
+    { to: "/miembros", label: "Miembros", icon: <FaUsers /> },
+    { to: "/empleados", label: "Empleados", icon: <FaUserTie /> },
+    { to: "/planes", label: "Planes", icon: <FaLayerGroup /> },
+    { to: "/Stock", label: "Stock / Inventario", icon: <FaBoxes /> },
+    { to: "/pagos", label: "Control de Pagos", icon: <FaCreditCard /> },
+    { to: "/asistencias", label: "Asistencias", icon: <FaClipboardList /> },
+    { to: "/configuracion", label: "Configuración", icon: <FaCog /> },
+  ];
+
   return (
-    <div className="sidebar bg-dark text-white d-flex flex-column p-3" style={{ width: '260px', height: '100vh' }}>
+    <div 
+      className="sidebar text-white d-flex flex-column p-3 sticky-top" 
+      style={{ width: '260px', height: '100vh', backgroundColor: '#1e293b', borderRight: '1px solid #334155' }}
+    >
+      {/* Logotipo o Cabecera de Marca */}
       <NavLink
-        to="/"
-        className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none"
+        to="/dashboard"
+        className="d-flex align-items-center gap-2 mb-4 mt-2 px-2 text-white text-decoration-none"
       >
-        <FaDumbbell className="me-2 fs-2" />
-        <span className="fs-4 fw-bold">Gym System</span>
+        <div className="bg-primary rounded-3 p-2 d-flex text-white shadow-sm">
+          <FaDumbbell className="fs-4" />
+        </div>
+        <span className="fs-5 fw-bold tracking-tight">Gym System</span>
       </NavLink>
-      <hr />
-      <Nav className="flex-column mb-auto">
-        <Nav.Item>
-          <NavLink to="/dashboard" className="nav-link text-white d-flex align-items-center">
-            <FaHome className="me-2" />
-            Dashboard
-          </NavLink>
-        </Nav.Item>
-        <Nav.Item>
-          <NavLink to="/recepcion" className="nav-link text-white d-flex align-items-center">
-            <FaHandHoldingUsd className="me-2" />
-            Recepción / Ventas
-          </NavLink>
-        </Nav.Item>
-        <Nav.Item>
-          <NavLink to="/miembros" className="nav-link text-white d-flex align-items-center">
-            <FaUsers className="me-2" />
-            Miembros
-          </NavLink>
-        </Nav.Item>
-        <Nav.Item>
-          <NavLink to="/empleados" className="nav-link text-white d-flex align-items-center">
-            <FaClock className="me-2" />
-            Empleados
-          </NavLink>
-        </Nav.Item>
-        <Nav.Item>
-          <NavLink to="/planes" className="nav-link text-white d-flex align-items-center">
-            <FaDumbbell className="me-2" /> 
-            Planes
-          </NavLink>
-        </Nav.Item>
-         <Nav.Item>
-          <NavLink to="/Stock" className="nav-link text-white d-flex align-items-center">
-            <FaDumbbell className="me-2" /> 
-            Stock
-          </NavLink>
-        </Nav.Item>
-        <Nav.Item>
-          <NavLink to="/pagos" className="nav-link text-white d-flex align-items-center">
-            <FaCreditCard className="me-2" />
-            Pagos
-          </NavLink>
-        </Nav.Item>
-        <Nav.Item>
-          <NavLink to="/asistencias" className="nav-link text-white d-flex align-items-center">
-            <FaClipboardList className="me-2" /> 
-            Asistencias
-          </NavLink>
-        </Nav.Item>
-        <Nav.Item>
-          <NavLink to="/configuracion" className="nav-link text-white d-flex align-items-center">
-            <FaCog className="me-2" />
-            Configuración
-          </NavLink>
-        </Nav.Item>
+
+      <hr style={{ borderColor: '#334155', opacity: '0.6' }} />
+
+      {/* Menú de Navegación con estados activos estilizados */}
+      <Nav className="flex-column mb-auto gap-1">
+        {enlacesNav.map((link) => (
+          <Nav.Item key={link.to}>
+            <NavLink 
+              to={link.to} 
+              className={({ isActive }) => 
+                `nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 fw-medium transition-all text-decoration-none ${
+                  isActive 
+                    ? 'bg-primary text-white shadow-sm' 
+                    : 'text-secondary-nav hover-bg-slate text-white-50'
+                }`
+              }
+              style={({ isActive }) => ({
+                fontSize: '14px',
+                backgroundColor: isActive ? '#4f46e5' : 'transparent',
+                transition: 'all 0.2s ease'
+              })}
+            >
+              <span className="d-flex fs-5 opacity-75">{link.icon}</span>
+              <span>{link.label}</span>
+            </NavLink>
+          </Nav.Item>
+        ))}
       </Nav>
-      <hr />
-      <div className="sidebar-footer text-white text-center mt-4">
-        <p className='text-white'>Usuario conectado: {user ? user.FullName : 'usuario'}</p>
+
+      <hr style={{ borderColor: '#334155', opacity: '0.6' }} />
+      
+      {/* Footer del Sidebar: Tarjeta de Operador Conectado */}
+      <div className="p-2 rounded-3 bg-slate-800" style={{ backgroundColor: '#0f172a' }}>
+        <div className="d-flex align-items-center gap-2 overflow-hidden">
+          <div className="bg-success rounded-circle" style={{ width: '8px', height: '8px', minWidth: '8px' }}></div>
+          <div className="text-truncate">
+            <small className="text-muted d-block" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sesión Activa</small>
+            <span className="fw-medium text-white-50 small text-truncate d-block">
+              {user?.nombre || user?.FullName || 'Operador'}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

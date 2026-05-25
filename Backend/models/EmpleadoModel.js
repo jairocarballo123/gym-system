@@ -8,7 +8,24 @@ class EmpleadoModel {
       const pool = await getConnection();
       const result = await pool.request()
         .input('Id', sql.Int, id)
-        .query('SELECT * FROM GYM_HR.Tbl_Employees WHERE EmployeeId = @Id');
+        .query(`
+          SELECT 
+            E.EmployeeId AS id, 
+            E.FullName AS nombre, 
+            E.Phone AS telefono, 
+            R.RoleName AS Rol, 
+            S.StatusName AS Estado,
+            E.Specialty AS Especialidad,
+            E.Availability AS Disponibilidad,
+            E.RoleId AS roleId,
+            E.StatusId AS statusId,
+            (SELECT COUNT(*) FROM GYM_OPERATIONS.Tbl_Members M WHERE M.TrainerId = E.EmployeeId) AS ClientesAsignados,
+            (SELECT COUNT(*) FROM GYM_BILLING.Tbl_Invoices I WHERE I.CashierId = E.EmployeeId) AS FacturasProcesadas
+          FROM GYM_HR.Tbl_Employees E
+          INNER JOIN GYM_SECURITY.Tbl_Roles R ON E.RoleId = R.RoleId
+          INNER JOIN GYM_CATALOGS.Tbl_Statuses S ON E.StatusId = S.StatusId
+          WHERE E.EmployeeId = @Id
+        `);
       return result.recordset[0];
     } catch (error) {
       throw new Error(`Error BD (findById): ${error.message}`);
@@ -43,8 +60,8 @@ class EmpleadoModel {
           INSERT INTO GYM_HR.Tbl_Employees 
             (FullName, Phone, RoleId, StatusId, PasswordHash, Specialty, Availability, CreatedAt)
           OUTPUT 
-            INSERTED.EmployeeId, INSERTED.FullName, INSERTED.Phone, 
-            INSERTED.RoleId, INSERTED.StatusId, INSERTED.Specialty, INSERTED.Availability
+            INSERTED.EmployeeId AS id, INSERTED.FullName AS nombre, INSERTED.Phone AS telefono, 
+            INSERTED.RoleId AS roleId, INSERTED.StatusId AS statusId, INSERTED.Specialty AS specialty, INSERTED.Availability AS availability
           VALUES 
             (@FullName, @Phone, @RoleId, @StatusId, @PasswordHash, @Specialty, @Availability, GETDATE());
         `);
@@ -72,27 +89,36 @@ class EmpleadoModel {
     }
   }
 
- static async listar() {
-  try {
-    const pool = await getConnection();
-    const result = await pool.request()
-      .query(`
-        SELECT 
-          EmployeeId AS id, 
-          FullName AS nombre, 
-          Phone AS telefono, 
-          RoleId AS roleId, 
-          StatusId AS statusId,
-          Specialty AS specialty,
-          Availability AS availability
-        FROM GYM_HR.Tbl_Employees
-        ORDER BY FullName ASC
-      `);
-    return result.recordset;
-  } catch (error) {
-    throw new Error(`Error BD (listar): ${error.message}`);
+  static async listar() {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request()
+        .query(`
+          SELECT 
+            E.EmployeeId AS id, 
+            E.FullName AS nombre, 
+            E.Phone AS telefono, 
+            R.RoleName AS Rol, 
+            S.StatusName AS Estado,
+            E.Specialty AS Especialidad,
+            E.Availability AS Disponibilidad,
+            E.RoleId AS roleId,
+            E.StatusId AS statusId,
+            -- Conteo de alumnos activos asignados al entrenador
+            (SELECT COUNT(*) FROM GYM_OPERATIONS.Tbl_Members M WHERE M.TrainerId = E.EmployeeId) AS ClientesAsignados,
+            -- Conteo de transacciones facturadas por el empleado
+            (SELECT COUNT(*) FROM GYM_BILLING.Tbl_Invoices I WHERE I.CashierId = E.EmployeeId) AS FacturasProcesadas
+          FROM GYM_HR.Tbl_Employees E
+          INNER JOIN GYM_SECURITY.Tbl_Roles R ON E.RoleId = R.RoleId
+          INNER JOIN GYM_CATALOGS.Tbl_Statuses S ON E.StatusId = S.StatusId
+          ORDER BY E.FullName ASC
+        `);
+      return result.recordset;
+    } catch (error) {
+      throw new Error(`Error BD (listar): ${error.message}`);
+    }
   }
-}
+
   static async actualizar(id, empleadoData) {
     try {
       const pool = await getConnection();
@@ -116,8 +142,8 @@ class EmpleadoModel {
             Availability = @Availability,
             UpdatedAt = GETDATE()
           OUTPUT 
-            INSERTED.EmployeeId, INSERTED.FullName, INSERTED.Phone,
-            INSERTED.RoleId, INSERTED.StatusId, INSERTED.Specialty, INSERTED.Availability
+            INSERTED.EmployeeId AS id, INSERTED.FullName AS nombre, INSERTED.Phone AS telefono,
+            INSERTED.RoleId AS roleId, INSERTED.StatusId AS statusId, INSERTED.Specialty AS specialty, INSERTED.Availability AS availability
           WHERE EmployeeId = @Id
         `);
 

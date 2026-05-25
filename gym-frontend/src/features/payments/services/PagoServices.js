@@ -1,28 +1,27 @@
-// src/features/pagos/services/pagoApi.js
-import api from '../../../api/AxiosConfig';
+
+import api from '../../../Api/AxiosConfig';
 
 export const pagoApi = {
-  // ========== FACTURAS ==========
-  // Listar todas las facturas
+  
   listarFacturas: async (filtros = {}) => {
     const params = new URLSearchParams(filtros).toString();
     const res = await api.get(`/pagos${params ? `?${params}` : ''}`);
     return res.data.data;
   },
 
-  // Obtener detalle de una factura
+
   obtenerDetalle: async (invoiceId) => {
     const res = await api.get(`/pagos/${invoiceId}`);
     return res.data.data;
   },
 
-  // Obtener facturas pendientes (con balance > 0)
+
   obtenerFacturasPendientes: async () => {
     const res = await api.get('/pagos/facturas-pendientes');
     return res.data.data;
   },
 
-  // Obtener historial de pagos de una factura
+
   obtenerHistorialPagos: async (invoiceId) => {
     const res = await api.get(`/pagos/${invoiceId}/pagos`);
     return res.data.data;
@@ -55,7 +54,6 @@ export const pagoApi = {
     return res.data.data;
   },
 
-  // ========== CANCELACIONES ==========
   cancelarFactura: async (invoiceId) => {
     const res = await api.delete(`/pagos/facturas/${invoiceId}`);
     return res.data;

@@ -22,7 +22,7 @@ const login = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        if (error.message === 'CREDS_INVALIDAS') {
+        if (error.message === 'credenciales invalidas') {
             return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
         }
         return res.status(500).json({ message: "Error interno" });

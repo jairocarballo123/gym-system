@@ -1,8 +1,8 @@
 // src/features/Recepcion/Components/SelectorProducto.jsx
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Spinner, Alert } from 'react-bootstrap';
+import { Card, Button, Spinner, Alert, Row, Col, Badge } from 'react-bootstrap';
 import { recepcionServices } from '../Services/RecepcionServices';
-import { FaBoxOpen, FaPlus } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
 
 const SelectorProducto = ({ onAgregarItem }) => {
   const [productos, setProductos] = useState([]);
@@ -29,34 +29,39 @@ const SelectorProducto = ({ onAgregarItem }) => {
     }
   };
 
-  if (loading) return <Spinner animation="border" size="sm" />;
-  if (error) return <Alert variant="danger">{error}</Alert>;
+  if (loading) return <div className="text-center p-4"><Spinner animation="border" variant="primary" /></div>;
+  if (error) return <Alert variant="danger" className="rounded-3">{error}</Alert>;
 
   return (
-    <div className="selector-producto">
-      <h6 className="fw-semibold  mb-2 text-primary">Stock disponible</h6>
-      <div className="d-flex flex-column gap-2">
+    <div className="selector-producto mt-3">
+      <Row className="g-3">
         {productos.map((prod) => (
-          <Card key={prod.id} className="border-0 shadow-sm">
-            <Card.Body className="d-flex justify-content-between align-items-center p-3">
-              <div>
-                <div className="fw-bold">{prod.nombre}</div>
-                <div className="small text-muted">
-                  ${prod.precio} · Stock: {prod.stockActual}
+          <Col md={6} key={prod.id}>
+            <Card className={`h-100 border border-light shadow-sm rounded-3 ${prod.stockActual === 0 ? 'opacity-50' : 'hover-effect'}`}>
+              <Card.Body className="d-flex justify-content-between align-items-center p-3">
+                <div>
+                  <div className="fw-bold text-dark mb-1">{prod.nombre}</div>
+                  <div className="d-flex align-items-center gap-2">
+                    <span className="small fw-bold text-primary">${prod.precio}</span>
+                    <Badge bg={prod.stockActual > 5 ? 'light' : 'warning'} text="dark" className="border">
+                      Stock: {prod.stockActual}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={() => onAgregarItem(prod, 'PRODUCT')}
-                disabled={prod.stockActual === 0}
-              >
-                <FaPlus />
-              </Button>
-            </Card.Body>
-          </Card>
+                <Button
+                  variant={prod.stockActual === 0 ? 'secondary' : 'primary'}
+                  className="rounded-circle p-2 shadow-sm d-flex align-items-center justify-content-center"
+                  style={{ width: '35px', height: '35px' }}
+                  onClick={() => onAgregarItem(prod, 'PRODUCT')}
+                  disabled={prod.stockActual === 0}
+                >
+                  <FaPlus size={12} />
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
         ))}
-      </div>
+      </Row>
     </div>
   );
 };

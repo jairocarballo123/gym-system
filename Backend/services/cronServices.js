@@ -3,7 +3,12 @@ const CronModel = require('../models/cronModel');
 
 class CronService {
     static async actualizarVencidos(fecha = null) {
-        return await CronModel.ejecutarVencimiento(fecha);
+        try {
+            return await CronModel.ejecutarVencimiento(fecha);
+        } catch (error) {
+            console.error('Error en CronService.actualizarVencidos:', error.message);
+            throw error;
+        }
     }
 }
 

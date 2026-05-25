@@ -34,27 +34,25 @@ class AsistenciaModel {
   }
 }
   static async obtenerAsistenciasHoy() {
-    try {
-      const pool = await getConnection();
-      const result = await pool.request()
-        .query(`
-          SELECT 
-            a.AttendanceId,
-            m.MemberId,
-            m.FullName AS nombre,
-            CONVERT(TIME, a.AccessDate) AS hora,
-            a.AccessDate AS fecha
-          FROM GYM_OPERATIONS.Tbl_Attendance a
-          INNER JOIN GYM_OPERATIONS.Tbl_Members m ON a.MemberId = m.MemberId
-          WHERE CAST(a.AccessDate AS DATE) = CAST(GETDATE() AS DATE)
-          ORDER BY a.AccessDate DESC
-        `);
-      return result.recordset;
-    } catch (error) {
-      throw new Error(`Error BD (obtenerAsistenciasHoy): ${error.message}`);
-    }
+  try {
+    const pool = await getConnection();
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          a.AttendanceId,
+          m.MemberId,
+          m.FullName AS nombre,
+          a.AccessDate AS fecha
+        FROM GYM_OPERATIONS.Tbl_Attendance a
+        INNER JOIN GYM_OPERATIONS.Tbl_Members m ON a.MemberId = m.MemberId
+        WHERE CAST(a.AccessDate AS DATE) = CAST(GETDATE() AS DATE)
+        ORDER BY a.AccessDate DESC
+      `);
+    return result.recordset;
+  } catch (error) {
+    throw new Error(`Error BD: ${error.message}`);
   }
-
+}
   
   static async obtenerHistorialPorMiembro(memberId, limite = 30) {
     try {

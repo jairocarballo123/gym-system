@@ -54,8 +54,8 @@ export const empleadoServices = {
 
   delete: async (id) => {
     try {
-      const response = await api.delete(`/empleados/${id}`);
-      return response.data;
+      const response = await api.delete(`/empleados/id/${id}`);
+      return response;
     } catch (error) {
       console.error(`Error al eliminar empleado con id ${id}:`, error);
       throw error;

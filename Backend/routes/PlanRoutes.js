@@ -14,8 +14,8 @@ router.get('/proximos-vencer', PlanController.getProximosVencer);
 router.get('/', PlanController.listar);
 router.get('/:id', PlanController.buscarPorId);
 
-router.post('/', authorize(1), PlanController.crear);
-router.put('/:id', authorize(1), PlanController.actualizar);
+router.post('/', authorize(1,3), PlanController.crear);
+router.put('/:id', authorize(1,3), PlanController.actualizar);
 router.patch('/:id', authorize(1), PlanController.eliminar);
 
 module.exports = router;

@@ -13,8 +13,8 @@ router.get('/id/:id', empleadosController.obtenerPorId);
 router.get('/nombre/:nombre', empleadosController.obtenerPorNombre);
 
 // Solo ADMIN puede crear, actualizar o eliminar
-router.post('/', authorize(1), empleadosController.crear);
-router.put('/id/:id', authorize(1), empleadosController.actualizar);
-router.delete('/id/:id', authorize(1), empleadosController.desactivar);
+router.post('/', authorize(1,3), empleadosController.crear);
+router.put('/id/:id', authorize(1,3), empleadosController.actualizar);
+router.delete('/id/:id', authorize(1,3), empleadosController.desactivar);
 
 module.exports = router;

@@ -10,9 +10,9 @@ router.get('/:id/detalle', MemberController.obtenerDetalleCompleto); // ← prim
 router.get('/:id', MemberController.buscarPorId);                   
 router.get('/', MemberController.listarTodos);
 // Solo ADMIN puede crear, actualizar o eliminar
-router.post('/', authorize(1), MemberController.registerFullMember);
-router.put('/:id', authorize(1), MemberController.actualizar);
-router.delete('/:id', authorize(1), MemberController.eliminar);
+router.post('/', authorize(1,3), MemberController.registerFullMember);
+router.put('/:id', authorize(1,3), MemberController.actualizar);
+router.delete('/:id', authorize(1,3), MemberController.eliminar);
 // routes/MiembroRoutes.js - agregar después de las rutas existentes
 
 

@@ -1,10 +1,11 @@
 // routes/Asistencia.routes.js
 const express = require('express');
 const router = express.Router();
+const { authorize } = require('../middlewares/role.middleware');
 const AsistenciaController = require('../controllers/AsistenciaController');
 
 
-router.post('/registrar', AsistenciaController.registrarEntrada);
+router.post('/registrar', authorize(1,3),  AsistenciaController.registrarEntrada);
 
 
 router.get('/hoy', AsistenciaController.obtenerAsistenciasHoy);

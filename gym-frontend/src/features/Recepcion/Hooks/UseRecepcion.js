@@ -1,7 +1,7 @@
 // src/features/Recepcion/Hooks/useRecepcion.js
 import { useState, useCallback } from 'react';
 import { recepcionServices } from '../Services/RecepcionServices';
-import { miembroServices } from '../../Miembros/services/MiembroServices';
+import { miembroServices } from '../../Miembros/Services/MiembroServices';
 import toast from 'react-hot-toast';
 
 export const useRecepcion = () => {

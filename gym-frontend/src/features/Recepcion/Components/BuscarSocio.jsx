@@ -1,8 +1,8 @@
 // src/features/Recepcion/Components/BuscarSocio.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { Form, ListGroup, Spinner, Alert } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Form, ListGroup, Spinner, Alert, InputGroup, Button } from 'react-bootstrap';
 import { recepcionServices } from '../Services/RecepcionServices';
-import { FaSearch, FaUserPlus } from 'react-icons/fa';
+import { FaSearch, FaUserPlus, FaUserCheck, FaTimes } from 'react-icons/fa';
 
 const BuscarSocio = ({ miembro, setMiembro, onCrearNuevo }) => {
   const [termino, setTermino] = useState('');
@@ -10,7 +10,6 @@ const BuscarSocio = ({ miembro, setMiembro, onCrearNuevo }) => {
   const [buscando, setBuscando] = useState(false);
   const [error, setError] = useState(null);
 
-  // Buscar miembros al escribir (con debounce)
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (termino.trim().length >= 2) {
@@ -41,8 +40,8 @@ const BuscarSocio = ({ miembro, setMiembro, onCrearNuevo }) => {
 
   const seleccionarMiembro = (member) => {
     setMiembro(member);
-    setTermino(member.fullName);
-    setResultados([]); // Limpiar resultados después de seleccionar
+    setTermino('');
+    setResultados([]);
   };
 
   const limpiarSeleccion = () => {
@@ -52,64 +51,75 @@ const BuscarSocio = ({ miembro, setMiembro, onCrearNuevo }) => {
   };
 
   return (
-    <div className="buscar-socio mb-4">
-      <Form.Group>
-        <Form.Label className="fw-semibold text-muted small">
-          <FaSearch className="me-1 text-primary" /> Buscar socio
-        </Form.Label>
-        <Form.Control
-          type="text"
-          placeholder="Nombre o teléfono..."
-          value={termino}
-          onChange={(e) => setTermino(e.target.value)}
-          disabled={buscando}
-        />
-        <Form.Text className="text-muted">
-          Ingresa al menos 2 caracteres para buscar
-        </Form.Text>
-      </Form.Group>
+    <div className="buscar-socio">
+      <div className="d-flex justify-content-between align-items-end mb-3">
+        <h6 className="fw-bold mb-0 text-dark">Información del Cliente</h6>
+        <Button variant="outline-primary" size="sm" onClick={onCrearNuevo} className="rounded-pill px-3">
+          <FaUserPlus className="me-1" /> Nuevo
+        </Button>
+      </div>
 
-      {buscando && <Spinner animation="border" size="sm" className="mt-2" />}
+      {!miembro ? (
+        <div className="position-relative">
+          <InputGroup className="shadow-sm rounded-3">
+            <InputGroup.Text className="bg-white border-end-0 text-muted">
+              <FaSearch />
+            </InputGroup.Text>
+            <Form.Control
+              type="text"
+              placeholder="Buscar por nombre o teléfono..."
+              value={termino}
+              onChange={(e) => setTermino(e.target.value)}
+              disabled={buscando}
+              className="border-start-0 py-2 bg-white form-control-lg fs-6"
+            />
+          </InputGroup>
 
-      {error && <Alert variant="danger" className="mt-2 small">{error}</Alert>}
+          {buscando && (
+            <div className="position-absolute top-100 end-0 mt-2 me-2 z-3">
+              <Spinner animation="border" size="sm" variant="primary" />
+            </div>
+          )}
 
-      {resultados.length > 0 && (
-        <ListGroup className="mt-2 shadow-sm" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-          {resultados.map((member) => (
-            <ListGroup.Item
-              key={member.id}
-              action
-              onClick={() => seleccionarMiembro(member)}
-              className="d-flex justify-content-between align-items-center"
-            >
-              <div>
-                <strong>{member.fullName}</strong>
-                <div className="small text-muted">{member.phone}</div>
-              </div>
-              <span className="badge bg-secondary">{member.statusId === 1 ? 'Activo' : 'Inactivo'}</span>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      )}
+          {error && <Alert variant="danger" className="mt-2 small rounded-3">{error}</Alert>}
 
-      {miembro && (
-        <div className="mt-3 p-2 bg-light border rounded d-flex justify-content-between align-items-center">
-          <div>
-            <strong>{miembro.fullName}</strong>
-            <div className="small text-muted">{miembro.phone}</div>
+          {resultados.length > 0 && (
+            <ListGroup className="position-absolute w-100 mt-1 shadow-lg rounded-3 z-3" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+              {resultados.map((member) => (
+                <ListGroup.Item
+                  key={member.id}
+                  action
+                  onClick={() => seleccionarMiembro(member)}
+                  className="d-flex justify-content-between align-items-center py-3 border-start-0 border-end-0"
+                >
+                  <div>
+                    <strong className="d-block text-dark">{member.fullName}</strong>
+                    <span className="small text-muted">{member.phone || 'Sin teléfono'}</span>
+                  </div>
+                  <span className={`badge ${member.statusId === 1 ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} rounded-pill`}>
+                    {member.statusId === 1 ? 'Activo' : 'Inactivo'}
+                  </span>
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          )}
+        </div>
+      ) : (
+        <div className="p-3 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-3 d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center">
+            <div className="bg-white text-primary rounded-circle d-flex justify-content-center align-items-center me-3 shadow-sm" style={{ width: '45px', height: '45px' }}>
+              <FaUserCheck size={20} />
+            </div>
+            <div>
+              <strong className="d-block fs-6 text-dark">{miembro.fullName}</strong>
+              <span className="small text-muted">{miembro.phone || 'Sin número registrado'}</span>
+            </div>
           </div>
-          <button className="btn btn-sm btn-outline-danger" onClick={limpiarSeleccion}>
-            Cambiar
-          </button>
+          <Button variant="link" className="text-danger p-0 text-decoration-none" onClick={limpiarSeleccion}>
+            <FaTimes size={18} />
+          </Button>
         </div>
       )}
-
-      <button
-        className="btn btn-outline-primary btn-sm mt-2 w-100"
-        onClick={onCrearNuevo}
-      >
-        <FaUserPlus className="me-1" /> Nuevo socio
-      </button>
     </div>
   );
 };

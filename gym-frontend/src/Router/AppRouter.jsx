@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../features/auth/Components/Login";
 import PrivateRoute from "./privateRoutes";
 import { AsistenciasList } from '../features/Asistencias';
-import { ProductoList } from '../features/Productos';
 import { PagosList } from '../features/payments';
 import EmpleadosList from "../features/Empleados/components/EmpleadoList";
 import EmpleadoDetalle from "../features/Empleados/components/EmpleadoDetalle";
@@ -13,6 +12,7 @@ import DashboardPage from '../features/dashboard/components/DashboardPage';
 import Configuracion from "../features/Config/configuracion";
 import RecepcionPage from "../features/Recepcion/Components/RecepcionPage";
 import MiembroDetalle from '../features/Miembros/components/MiembroDetalle';
+import { ProductoList, ProductoDetalle } from '../features/Productos';
 
 const AppRouter = () => {
   return (
@@ -35,6 +35,7 @@ const AppRouter = () => {
 
 
         <Route path="/miembros/:id" element={<MiembroDetalle />} />
+        <Route path="/Stock/:id" element={<ProductoDetalle />} />
 
         <Route path="/configuracion" element={<Configuracion />} />
         <Route path="/recepcion" element={<RecepcionPage />} />

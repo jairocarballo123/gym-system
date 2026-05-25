@@ -19,73 +19,80 @@ class DashboardModel {
   }
 
 
-static async obtenerUltimasActividades(limite = 20) {
+
+  static async obtenerUltimasActividades(limite = 20) {
   try {
     const pool = await getConnection();
     const result = await pool.request()
       .input('limite', sql.Int, limite)
       .query(`
-        -- 1. VENTAS (facturas)
-        SELECT TOP (@limite)
-          'VENTA' AS tipo,
-          i.InvoiceNumber AS referencia,
-          i.TotalAmount AS monto,
-          i.InvoiceDate AS fecha,
-          CONCAT('Factura ', i.InvoiceNumber, ' - C$', i.TotalAmount) AS descripcion,
-          i.InvoiceId AS id
-        FROM GYM_BILLING.Tbl_Invoices i
+        SELECT * FROM (
+          -- 1. VENTAS
+          SELECT 
+            'VENTA' AS tipo,
+            i.InvoiceNumber AS referencia,
+            i.TotalAmount AS monto,
+            i.InvoiceDate AS fecha,
+            CONCAT('Factura ', i.InvoiceNumber, ' - C$', i.TotalAmount) AS descripcion,
+            i.InvoiceId AS id,
+            i.InvoiceDate AS fechacomp
+          FROM GYM_BILLING.Tbl_Invoices i
 
-        UNION ALL
+          UNION ALL
 
-        -- 2. PAGOS (abonos)
-        SELECT TOP (@limite)
-          'PAGO' AS tipo,
-          p.ReferenceNumber AS referencia,
-          p.AmountPaid AS monto,
-          p.PaymentDate AS fecha,
-          CONCAT('Abono de C$', p.AmountPaid, ' a factura ', i.InvoiceNumber) AS descripcion,
-          p.PaymentId AS id
-        FROM GYM_BILLING.Tbl_Payments p
-        INNER JOIN GYM_BILLING.Tbl_Invoices i ON p.InvoiceId = i.InvoiceId
+          -- 2. PAGOS
+          SELECT 
+            'PAGO' AS tipo,
+            p.ReferenceNumber AS referencia,
+            p.AmountPaid AS monto,
+            p.PaymentDate AS fecha,
+            CONCAT('Abono de C$', p.AmountPaid, ' a factura ', i.InvoiceNumber) AS descripcion,
+            p.PaymentId AS id,
+            p.PaymentDate AS fechacomp
+          FROM GYM_BILLING.Tbl_Payments p
+          INNER JOIN GYM_BILLING.Tbl_Invoices i ON p.InvoiceId = i.InvoiceId
 
-        UNION ALL
+          UNION ALL
 
-        -- 3. ASISTENCIAS
-        SELECT TOP (@limite)
-          'ASISTENCIA' AS tipo,
-          CAST(a.AttendanceId AS VARCHAR) AS referencia,
-          NULL AS monto,
-          a.AccessDate AS fecha,
-          CONCAT(m.FullName, ' registró entrada') AS descripcion,
-          a.AttendanceId AS id
-        FROM GYM_OPERATIONS.Tbl_Attendance a
-        INNER JOIN GYM_OPERATIONS.Tbl_Members m ON a.MemberId = m.MemberId
+          -- 3. ASISTENCIAS
+          SELECT 
+            'ASISTENCIA' AS tipo,
+            CAST(a.AttendanceId AS VARCHAR) AS referencia,
+            NULL AS monto,
+            a.AccessDate AS fecha,
+            CONCAT(m.FullName, ' registró entrada') AS descripcion,
+            a.AttendanceId AS id,
+            a.AccessDate AS fechacomp
+          FROM GYM_OPERATIONS.Tbl_Attendance a
+          INNER JOIN GYM_OPERATIONS.Tbl_Members m ON a.MemberId = m.MemberId
 
-        UNION ALL
+          UNION ALL
 
-        -- 4. MOVIMIENTOS DE INVENTARIO (ajustes de stock)
-        SELECT TOP (@limite)
-          'INVENTARIO' AS tipo,
-          CAST(m.MovementId AS VARCHAR) AS referencia,
-          NULL AS monto,
-          m.CreatedAt AS fecha,
-          CONCAT('Movimiento de stock: ', m.MovementType, ' ', ABS(m.Quantity), ' unidades') AS descripcion,
-          m.MovementId AS id
-        FROM GYM_INVENTORY.Tbl_InventoryMovements m
+          -- 4. MOVIMIENTOS DE INVENTARIO
+          SELECT 
+            'INVENTARIO' AS tipo,
+            CAST(m.MovementId AS VARCHAR) AS referencia,
+            NULL AS monto,
+            m.CreatedAt AS fecha,
+            CONCAT('Movimiento de stock: ', m.MovementType, ' ', ABS(m.Quantity), ' unidades') AS descripcion,
+            m.MovementId AS id,
+            m.CreatedAt AS fechacomp
+          FROM GYM_INVENTORY.Tbl_InventoryMovements m
 
-        UNION ALL
+          UNION ALL
 
-        -- 5. MIEMBROS NUEVOS (creación)
-        SELECT TOP (@limite)
-          'MIEMBRO_NUEVO' AS tipo,
-          CAST(m.MemberId AS VARCHAR) AS referencia,
-          NULL AS monto,
-          m.CreatedAt AS fecha,
-          CONCAT('Nuevo miembro: ', m.FullName) AS descripcion,
-          m.MemberId AS id
-        FROM GYM_OPERATIONS.Tbl_Members m
-
-        ORDER BY fecha DESC
+          -- 5. MIEMBROS NUEVOS
+          SELECT 
+            'MIEMBRO_NUEVO' AS tipo,
+            CAST(m.MemberId AS VARCHAR) AS referencia,
+            NULL AS monto,
+            m.CreatedAt AS fecha,
+            CONCAT('Nuevo miembro: ', m.FullName) AS descripcion,
+            m.MemberId AS id,
+            m.CreatedAt AS fechacomp
+          FROM GYM_OPERATIONS.Tbl_Members m
+        ) AS actividades
+        ORDER BY fechacomp DESC
         OFFSET 0 ROWS FETCH NEXT @limite ROWS ONLY
       `);
     return result.recordset;
@@ -93,7 +100,6 @@ static async obtenerUltimasActividades(limite = 20) {
     throw new Error(`Error BD (actividades): ${error.message}`);
   }
 }
-
 
 }
 

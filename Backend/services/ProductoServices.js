@@ -64,15 +64,15 @@ class ProductoService {
       throw new Error(`Error al obtener stock: ${error.message}`);
     }
   }
-static async ajustarStock(productId, cantidad, userId, motivo) {
-  try {
-    if (cantidad === 0) throw new Error('La cantidad debe ser diferente de cero');
+  static async ajustarStock(productId, cantidad, userId, motivo) {
+    try {
+      if (cantidad === 0) throw new Error('La cantidad debe ser diferente de cero');
 
-    return await ProductoModel.ajustarStock(productId, cantidad, userId);
-  } catch (error) {
-    throw new Error(`Error al ajustar stock: ${error.message}`);
+      return await ProductoModel.ajustarStock(productId, cantidad, userId);
+    } catch (error) {
+      throw new Error(`Error al ajustar stock: ${error.message}`);
+    }
   }
-}
 
   static async obtenerResumen() {
     try {
@@ -82,28 +82,29 @@ static async ajustarStock(productId, cantidad, userId, motivo) {
     }
   }
 
-  static async obtenerStockBajo(umbral = 5) {
-    try {
-      return await ProductoModel.obtenerStockBajo(umbral);
-    } catch (error) {
-      throw new Error(`Error al obtener productos con stock bajo: ${error.message}`);
-    }
-  }
-static async obtenerMasVendidos(limite = 5) {
-  try {
-    return await ProductoModel.obtenerMasVendidos(limite);
-  } catch (error) {
-    throw new Error(`Error al obtener productos más vendidos: ${error.message}`);
-  }
-}
 
-  static async obtenerMovimientos(productId) {
+  static async obtenerDetalleCompleto(id) {
     try {
-      return await ProductoModel.obtenerMovimientos(productId);
+      // Buscar producto por ID
+      const producto = await ProductoModel.buscarPorId(id);
+      if (!producto) throw new Error('Producto no encontrado');
+
+      // Pasar parámetros correctos
+      const masVendidos = await ProductoModel.obtenerMasVendidos(5);
+      const movimientos = await ProductoModel.obtenerMovimientos(id, 20);
+      const stockBajo = await ProductoModel.obtenerStockBajo(5);
+
+      return { producto, masVendidos, movimientos, stockBajo };
     } catch (error) {
-      throw new Error(`Error al obtener movimientos: ${error.message}`);
+      console.error("Error en obtenerDetalleCompleto:", error.message);
+
+
+      throw error;
+
+
     }
   }
+
 }
 
 module.exports = ProductoService;

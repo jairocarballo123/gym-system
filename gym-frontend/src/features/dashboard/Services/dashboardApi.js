@@ -1,4 +1,4 @@
-import api from '../../../api/AxiosConfig';
+import api from '../../../Api/AxiosConfig';
 
 export const dashboardApi = {
   getResumen: async () => {

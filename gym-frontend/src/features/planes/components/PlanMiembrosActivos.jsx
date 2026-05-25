@@ -6,46 +6,50 @@ import { FaUsers } from 'react-icons/fa';
 const PlanMiembrosActivos = ({ data }) => {
   if (!data || data.length === 0) {
     return (
-      <Card className="border-0 shadow-sm mb-4">
-        <Card.Body className="text-center text-muted py-5">
-          <FaUsers size={40} className="mb-2 opacity-50" />
-          <p>No hay datos de miembros por plan</p>
+      <Card className="border-0 shadow-sm rounded-4 h-100">
+        <Card.Body className="d-flex flex-column align-items-center justify-content-center text-muted p-5">
+          <FaUsers size={40} className="mb-3 opacity-25" />
+          <p className="mb-0 fw-medium">No hay datos de miembros</p>
         </Card.Body>
       </Card>
     );
   }
 
   return (
-    <Card className="border-0 shadow-sm mb-4">
-      <Card.Header className="bg-white border-0 pt-3">
+    <Card className="border-0 shadow-sm rounded-4 h-100">
+      <Card.Header className="bg-white border-bottom pt-4 pb-3 px-4">
         <div className="d-flex align-items-center">
-          <FaUsers className="text-primary me-2" />
-          <h6 className="fw-bold mb-0">Miembros Activos por Plan</h6>
+          <div className="bg-primary text-white rounded p-2 me-3 shadow-sm">
+            <FaUsers size={18} />
+          </div>
+          <h6 className="fw-bold mb-0 text-dark">Miembros por Plan</h6>
         </div>
       </Card.Header>
-      <Card.Body>
-        <Table striped bordered hover responsive size="sm">
-          <thead>
-            <tr>
-              <th>Plan</th>
-              <th>Miembros Activos</th>
-              <th>% del total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((plan) => (
-              <tr key={plan.PlanId}>
-                <td className="fw-bold">{plan.PlanName}</td>
-                <td>
-                  <Badge bg="success" pill>
-                    {plan.cantidad_miembros}
-                  </Badge>
-                </td>
-                <td>{plan.porcentaje}%</td>
+      <Card.Body className="p-0">
+        <div className="table-responsive">
+          <Table borderless hover className="align-middle mb-0">
+            <thead className="bg-light text-muted small text-uppercase">
+              <tr>
+                <th className="ps-4 fw-semibold">Plan</th>
+                <th className="text-center fw-semibold">Total</th>
+                <th className="pe-4 text-end fw-semibold">%</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {data.map((plan) => (
+                <tr key={plan.PlanId} className="border-bottom border-light">
+                  <td className="ps-4 fw-bold text-dark">{plan.PlanName}</td>
+                  <td className="text-center">
+                    <Badge bg="primary-subtle" text="primary" pill className="px-3">
+                      {plan.cantidad_miembros}
+                    </Badge>
+                  </td>
+                  <td className="pe-4 text-end text-muted fw-medium">{plan.porcentaje}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
       </Card.Body>
     </Card>
   );

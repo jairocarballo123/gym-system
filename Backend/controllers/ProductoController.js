@@ -76,32 +76,15 @@ const ProductoController = {
   }
 },
 
- async obtenerStockBajo(req, res) {
+async obtenerDetalleCompleto(req, res) {
   try {
-    const productos = await ProductoService.obtenerStockBajo();
-    res.json({ success: true, data: productos });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-},
- async obtenerMasVendidos(req, res) {
-  try {
-    const limite = req.query.limite || 5;
-    const productos = await ProductoService.obtenerMasVendidos(limite);
-    res.json({ success: true, data: productos });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-},
-
- async obtenerMovimientos(req, res) {
-  try {
-    const movimientos = await ProductoService.obtenerMovimientos(req.params.id);
-    res.json({ success: true, data: movimientos });
+    const detalleProducto = await ProductoService.obtenerDetalleCompleto(req.params.id);
+    res.json({ success: true, data: detalleProducto });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }
 }
+
 };
 
 module.exports = ProductoController;

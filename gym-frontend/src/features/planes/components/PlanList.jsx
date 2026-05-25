@@ -1,15 +1,15 @@
 // src/features/planes/components/PlanList.jsx
 import React, { useState, useEffect } from 'react';
-import { Container, Button, Spinner, Alert, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { FaPlus } from 'react-icons/fa';
-import { usePlanes } from '../hooks/usePlanes';
+import { Container, Button, Spinner, Alert, OverlayTrigger, Tooltip, Row, Col, Card } from 'react-bootstrap';
+import { FaPlus, FaClipboardList } from 'react-icons/fa';
+import { usePlanes } from '../hooks/useplanes';
 import { planApi } from '../Services/PlanServices';
-import PlanTable from './PlanTable';
-import PlanForm from './PlanForm';
+import PlanTable from '../components/planTable';
+import PlanForm from '../components/planForm';
 import PlanStatsCards from './PlanStatsCards';
 import PlanMiembrosActivos from './PlanMiembrosActivos';
-import PlanProximosVencer from './/PlanProximosVencer';
-import PlanIngresosReales from './PlanIngresos';
+import PlanProximosVencer from './PlanProximosVencer';
+import PlanIngresosReales from './PlanIngresos'; 
 import toast from 'react-hot-toast';
 
 const PlanList = () => {
@@ -54,13 +54,13 @@ const PlanList = () => {
   };
 
   const handleDelete = async (plan) => {
-    if (window.confirm(`¿Desactivar el plan "${plan.PlanName}"?`)) {
+    if (window.confirm(`¿Estás seguro de desactivar el plan "${plan.PlanName}"?`)) {
       try {
         await planApi.delete(plan.PlanId);
-        toast.success('Plan desactivado');
+        toast.success('Plan desactivado exitosamente');
         refresh();
       } catch (err) {
-        toast.error(err.response?.data?.message || 'Error al desactivar');
+        toast.error(err.response?.data?.message || 'Error al desactivar el plan');
       }
     }
   };
@@ -69,10 +69,10 @@ const PlanList = () => {
     try {
       if (editing) {
         await planApi.update(editing.PlanId, data);
-        toast.success('Plan actualizado');
+        toast.success('Plan actualizado correctamente');
       } else {
         await planApi.create(data);
-        toast.success('Plan creado');
+        toast.success('Nuevo plan creado');
       }
       refresh();
       setShowModal(false);
@@ -84,38 +84,64 @@ const PlanList = () => {
 
   if (loading || loadingStats) {
     return (
-      <div className="d-flex justify-content-center my-5">
+      <div className="min-vh-100 d-flex justify-content-center align-items-center bg-light">
         <Spinner animation="border" variant="primary" />
       </div>
     );
   }
 
   if (error) {
-    return <Alert variant="danger">{error}</Alert>;
+    return (
+      <Container fluid className="p-4">
+        <Alert variant="danger" className="rounded-3 shadow-sm">{error}</Alert>
+      </Container>
+    );
   }
 
   return (
-    <Container fluid className="p-4">
+    <Container fluid className="p-4 bg-light min-vh-100">
+      {/* Encabezado */}
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-          <h2 className="fw-bold text-dark mb-1">Gestión de Planes</h2>
-          <p className="text-muted small mb-0">Administra las membresías y servicios del gimnasio</p>
+          <h2 className="fw-bold text-dark mb-0">Gestión de Planes</h2>
+          <p className="text-muted mb-0">Administra membresías, precios y métricas</p>
         </div>
         <OverlayTrigger placement="left" overlay={<Tooltip>Registrar nuevo plan</Tooltip>}>
-          <Button variant="primary" onClick={() => setShowModal(true)}>
+          <Button variant="primary" className="rounded-pill px-4 py-2 shadow-sm fw-bold" onClick={() => setShowModal(true)}>
             <FaPlus className="me-2" /> Nuevo Plan
           </Button>
         </OverlayTrigger>
       </div>
 
+      {/* Tarjetas Superiores (KPIs) */}
       <PlanStatsCards resumen={resumen} masVendido={masVendido} />
 
-      <PlanMiembrosActivos data={miembrosPorPlan} />
-      <PlanProximosVencer data={proximosVencer} />
-      <PlanIngresosReales data={ingresosPorPlan} />
+      {/* Fila de Widgets (3 columnas) */}
+      <Row className="g-4 mb-4">
+        <Col lg={4} md={12}>
+          <PlanMiembrosActivos data={miembrosPorPlan} />
+        </Col>
+        <Col lg={4} md={12}>
+          <PlanIngresosReales data={ingresosPorPlan} />
+        </Col>
+        <Col lg={4} md={12}>
+          <PlanProximosVencer data={proximosVencer} />
+        </Col>
+      </Row>
 
-      <PlanTable planes={planes} onEdit={handleEdit} onDelete={handleDelete} />
+      {/* Tabla Principal */}
+      <Card className="border-0 shadow-sm rounded-4">
+        <Card.Header className="bg-white border-bottom-0 pt-4 pb-0 px-4">
+          <h5 className="fw-bold mb-0 d-flex align-items-center">
+            <FaClipboardList className="me-2 text-primary" /> Catálogo de Planes
+          </h5>
+        </Card.Header>
+        <Card.Body className="p-4">
+          <PlanTable planes={planes} onEdit={handleEdit} onDelete={handleDelete} />
+        </Card.Body>
+      </Card>
 
+      {/* Modal de Formulario */}
       <PlanForm
         show={showModal}
         handleClose={() => {

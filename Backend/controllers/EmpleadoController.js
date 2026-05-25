@@ -63,8 +63,8 @@ class EmpleadoController {
   // Actualizar empleado
   static async actualizar(req, res) {
     try {
-       console.log('📥 Datos recibidos en backend:', req.body);  // ← AGREGAR
-       console.log('📥 ID recibido:', req.params.id);            // ← AGREGAR
+       console.log('Datos recibidos en backend:', req.body);  // ← AGREGAR
+       console.log('ID recibido:', req.params.id);            // ← AGREGAR
       const { id } = req.params;
       const actualizado = await EmpleadoService.actualizarEmpleado(id, req.body);
       res.json({ success: true, data: actualizado });

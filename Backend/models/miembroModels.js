@@ -7,7 +7,7 @@ class MemberModel {
     try {
       const pool = await getConnection();
 
-  
+
       await pool.request()
         .input('userId', sql.Int, userId)
         .query('EXEC sp_set_session_context @key = N\'UserId\', @value = @userId;');
@@ -133,10 +133,10 @@ class MemberModel {
     }
   }
 
-static async listarTodos() {
-  try {
-    const pool = await getConnection();
-    const result = await pool.request().query(`
+  static async listarTodos() {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request().query(`
       SELECT 
         M.MemberId AS id, 
         M.FullName AS fullName, 
@@ -150,18 +150,18 @@ static async listarTodos() {
       FROM GYM_OPERATIONS.Tbl_Members M
       LEFT JOIN GYM_HR.Tbl_Employees E ON M.TrainerId = E.EmployeeId
     `);
-    return result.recordset;
-  } catch (error) {
-    throw new Error(`Error BD (listar Miembros): ${error.message}`);
+      return result.recordset;
+    } catch (error) {
+      throw new Error(`Error BD (listar Miembros): ${error.message}`);
+    }
   }
-}
   // models/MemberModel.js
-static async buscarPorId(id) {
-  try {
-    const pool = await getConnection();
-    const result = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`
+  static async buscarPorId(id) {
+    try {
+      const pool = await getConnection();
+      const result = await pool.request()
+        .input('id', sql.Int, id)
+        .query(`
         SELECT 
           M.MemberId AS id, 
           M.FullName AS fullName, 
@@ -176,11 +176,11 @@ static async buscarPorId(id) {
         LEFT JOIN GYM_HR.Tbl_Employees E ON M.TrainerId = E.EmployeeId
         WHERE M.MemberId = @id   
       `);
-    return result.recordset[0];
-  } catch (error) {
-    throw new Error(`Error BD (buscar Miembro): ${error.message}`);
+      return result.recordset[0];
+    } catch (error) {
+      throw new Error(`Error BD (buscar Miembro): ${error.message}`);
+    }
   }
-}
 
 
 
@@ -205,16 +205,16 @@ static async buscarPorId(id) {
     }
   }
 
-static async actualizar(id, data) {
-  try {
-    const pool = await getConnection();
-    await pool.request()
-      .input('id', sql.Int, id)
-      .input('fullName', sql.VarChar(100), data.fullName)
-      .input('phone', sql.VarChar(20), data.phone)
-      .input('address', sql.VarChar(255), data.address)
-      .input('trainerId', sql.Int, data.trainerId || null)
-      .query(`
+  static async actualizar(id, data) {
+    try {
+      const pool = await getConnection();
+      await pool.request()
+        .input('id', sql.Int, id)
+        .input('fullName', sql.VarChar(100), data.fullName)
+        .input('phone', sql.VarChar(20), data.phone)
+        .input('address', sql.VarChar(255), data.address)
+        .input('trainerId', sql.Int, data.trainerId || null)
+        .query(`
         UPDATE GYM_OPERATIONS.Tbl_Members 
         SET 
           FullName = COALESCE(@fullName, FullName), 
@@ -223,11 +223,11 @@ static async actualizar(id, data) {
           TrainerId = @trainerId    -- ← NUEVO: permite actualizar (incluso a NULL)
         WHERE MemberId = @id
       `);
-    return { id, ...data };
-  } catch (error) {
-    throw new Error(`Error BD (actualizar Miembro): ${error.message}`);
+      return { id, ...data };
+    } catch (error) {
+      throw new Error(`Error BD (actualizar Miembro): ${error.message}`);
+    }
   }
-}
   static async eliminar(id) {
     try {
       const pool = await getConnection();
@@ -292,13 +292,16 @@ static async actualizar(id, data) {
       const pool = await getConnection();
       const result = await pool.request()
         .query(`
-        SELECT COUNT(*) AS total
-        FROM GYM_OPERATIONS.Tbl_Members m
-        WHERE m.StatusId = 1 
-          AND EXISTS (
-            SELECT 1 FROM GYM_BILLING.Tbl_Invoices i 
-            WHERE i.MemberId = m.MemberId AND i.Balance > 0
-          )
+       
+          SELECT COUNT(*) AS total
+          FROM GYM_OPERATIONS.Tbl_Members m
+          WHERE EXISTS (
+          SELECT 1 
+          FROM GYM_BILLING.Tbl_Invoices i 
+          WHERE i.MemberId = m.MemberId 
+          AND i.Balance > 0
+);
+
       `);
       return result.recordset[0].total;
     } catch (error) {

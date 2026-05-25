@@ -1,12 +1,12 @@
 // src/features/Miembros/components/MiembroList.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { Row, Col, Card, Spinner, Alert } from 'react-bootstrap';
+import { Row, Col, Card, Spinner, Alert, Button, Container } from 'react-bootstrap';
 import { useMiembro } from '../hooks/usemember';
 import { miembroServices } from '../Services/MiembroServices';
-import { FaUsers, FaUserCheck, FaExclamationTriangle, FaMoneyBillWave } from 'react-icons/fa';
+import { FaUsers, FaUserCheck, FaExclamationTriangle, FaMoneyBillWave, FaPlus } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import MiembroTabla from './MiembroTabla'; 
-import MiembroForm from './miembroForm';   
+import MiembroForm from './miembroForm';    
 
 const MiembroList = () => {
   const { miembros, loading: loadingMiembros, error: errorMiembros, refresh } = useMiembro();
@@ -16,7 +16,6 @@ const MiembroList = () => {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  // Función para cargar el resumen (puede reutilizarse)
   const fetchResumen = useCallback(async () => {
     setLoadingResumen(true);
     try {
@@ -32,7 +31,6 @@ const MiembroList = () => {
     }
   }, []);
 
-  // Cargar resumen al montar el componente
   useEffect(() => {
     fetchResumen();
   }, [fetchResumen]);
@@ -47,8 +45,8 @@ const MiembroList = () => {
       try {
         await miembroServices.delete(miembro.id);
         toast.success('Miembro desactivado');
-        refresh();        // Recargar lista de miembros
-        fetchResumen();   // Recargar resumen (tarjetas)
+        refresh();
+        fetchResumen();
       } catch (err) {
         toast.error(err.response?.data?.message || 'Error al desactivar');
       }
@@ -66,8 +64,8 @@ const MiembroList = () => {
       }
       setShowModal(false);
       setEditing(null);
-      refresh();        // Recargar lista de miembros
-      fetchResumen();   // Recargar resumen (tarjetas)
+      refresh();
+      fetchResumen();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error al guardar');
     }
@@ -75,60 +73,93 @@ const MiembroList = () => {
 
   if (loadingResumen || loadingMiembros) {
     return (
-      <div className="d-flex justify-content-center my-5">
+      <div className="d-flex justify-content-center align-items-center my-5" style={{ minHeight: '300px' }}>
         <Spinner animation="border" variant="primary" />
       </div>
     );
   }
 
   if (errorResumen || errorMiembros) {
-    return <Alert variant="danger">{errorResumen || errorMiembros}</Alert>;
+    return (
+      <Container fluid className="p-4">
+        <Alert variant="danger" className="rounded-3 shadow-sm">{errorResumen || errorMiembros}</Alert>
+      </Container>
+    );
   }
 
   return (
-    <div>
-      {/* Tarjetas de resumen */}
+    <Container fluid className="p-4">
+      {/* Encabezado Principal */}
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+          <h2 className="fw-bold text-dark mb-1">Módulo de Miembros</h2>
+          <p className="text-muted small mb-0">Listado de atletas, control de asistencias y estados de cuenta</p>
+        </div>
+        <Button variant="primary" className="rounded-3 px-4 py-2 fw-medium shadow-sm" onClick={() => setShowModal(true)}>
+          <FaPlus className="me-2" /> Nuevo Miembro
+        </Button>
+      </div>
+
+      {/* Tarjetas de Métricas Rediseñadas */}
       <Row className="mb-4 g-3">
-        <Col md={3}>
-          <Card className="text-center border-primary shadow-sm">
-            <Card.Body>
-              <FaUsers size={30} className="text-primary mb-2" />
-              <Card.Title className="text-muted">Total Miembros</Card.Title>
-              <h2 className="text-primary fw-bold">{resumen?.total || 0}</h2>
+        <Col sm={6} xl={3}>
+          <Card className="border-0 shadow-sm rounded-3 overflow-hidden">
+            <Card.Body className="p-4 d-flex align-items-center gap-3">
+              <div className="bg-primary bg-opacity-10 text-primary rounded-3 p-3 fs-3 d-inline-flex">
+                <FaUsers />
+              </div>
+              <div>
+                <h6 className="text-muted mb-1 small fw-bold text-uppercase">Total Atletas</h6>
+                <h3 className="text-dark fw-bold mb-0">{resumen?.total || 0}</h3>
+              </div>
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
-          <Card className="text-center border-success shadow-sm">
-            <Card.Body>
-              <FaUserCheck size={30} className="text-success mb-2" />
-              <Card.Title className="text-muted">Activos</Card.Title>
-              <h2 className="text-success fw-bold">{resumen?.activos || 0}</h2>
+
+        <Col sm={6} xl={3}>
+          <Card className="border-0 shadow-sm rounded-3 overflow-hidden">
+            <Card.Body className="p-4 d-flex align-items-center gap-3">
+              <div className="bg-success bg-opacity-10 text-success rounded-3 p-3 fs-3 d-inline-flex">
+                <FaUserCheck />
+              </div>
+              <div>
+                <h6 className="text-muted mb-1 small fw-bold text-uppercase">Activos</h6>
+                <h3 className="text-dark fw-bold mb-0">{resumen?.activos || 0}</h3>
+              </div>
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
-          <Card className="text-center border-warning shadow-sm">
-            <Card.Body>
-              <FaExclamationTriangle size={30} className="text-warning mb-2" />
-              <Card.Title className="text-muted">Próximos a vencer</Card.Title>
-              <h2 className="text-warning fw-bold">{resumen?.proximosAVencer || 0}</h2>
-              <small className="text-muted">en 7 días</small>
+
+        <Col sm={6} xl={3}>
+          <Card className="border-0 shadow-sm rounded-3 overflow-hidden">
+            <Card.Body className="p-4 d-flex align-items-center gap-3">
+              <div className="bg-warning bg-opacity-10 text-warning text-dark rounded-3 p-3 fs-3 d-inline-flex">
+                <FaExclamationTriangle />
+              </div>
+              <div>
+                <h6 className="text-muted mb-1 small fw-bold text-uppercase">Por Vencer <span className="text-secondary text-none capitalize fw-normal">(7d)</span></h6>
+                <h3 className="text-dark fw-bold mb-0">{resumen?.proximosAVencer || 0}</h3>
+              </div>
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
-          <Card className="text-center border-danger shadow-sm">
-            <Card.Body>
-              <FaMoneyBillWave size={30} className="text-danger mb-2" />
-              <Card.Title className="text-muted">Deudores</Card.Title>
-              <h2 className="text-danger fw-bold">{resumen?.deudores || 0}</h2>
+
+        <Col sm={6} xl={3}>
+          <Card className="border-0 shadow-sm rounded-3 overflow-hidden">
+            <Card.Body className="p-4 d-flex align-items-center gap-3">
+              <div className="bg-danger bg-opacity-10 text-danger rounded-3 p-3 fs-3 d-inline-flex">
+                <FaMoneyBillWave />
+              </div>
+              <div>
+                <h6 className="text-muted mb-1 small fw-bold text-uppercase">Deudores</h6>
+                <h3 className="text-dark fw-bold mb-0">{resumen?.deudores || 0}</h3>
+              </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      {/* Tabla de miembros */}
+      {/* Contenedor de la Tabla */}
       <MiembroTabla
         miembros={miembros}
         onEdit={handleEdit}
@@ -145,7 +176,7 @@ const MiembroList = () => {
         onSubmit={handleSave}
         initialData={editing}
       />
-    </div>
+    </Container>
   );
 };
 

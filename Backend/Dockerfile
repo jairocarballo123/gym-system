@@ -1,13 +1,18 @@
- FROM node:20
+FROM node:18-alpine
 
 WORKDIR /app
 
+# Copiar archivos de dependencias
 COPY package*.json ./
 
-RUN npm install
+# Instalar dependencias 
+RUN npm ci --only=production
 
+# Copiar el resto del código
 COPY . .
 
+# Exponer puerto
 EXPOSE 3000
 
+# Comando para iniciar el backend
 CMD ["node", "server.js"]

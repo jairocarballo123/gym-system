@@ -19,9 +19,9 @@ router.get('/', PagoController.listarFacturas);
 // ============================================
 // RUTAS SOLO ADMIN (requieren roleId = 1)
 // ============================================
-router.post('/', authorize(1), PagoController.procesarVenta);
-router.post('/abono', authorize(1), PagoController.registrarAbono);
-router.delete('/pagos/:paymentId', authorize(1), PagoController.eliminarPago);
-router.delete('/facturas/:invoiceId', authorize(1), PagoController.cancelarFactura);
+router.post('/', authorize(1,3), PagoController.procesarVenta);
+router.post('/abono', authorize(1,3), PagoController.registrarAbono);
+router.delete('/pagos/:paymentId', authorize(1,3), PagoController.eliminarPago);
+router.delete('/facturas/:invoiceId', authorize(1,3), PagoController.cancelarFactura);
 
 module.exports = router;

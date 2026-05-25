@@ -1,5 +1,5 @@
 // src/features/asistencias/services/asistenciaApi.js
-import api from '../../../api/AxiosConfig';
+import api from '../../../Api/AxiosConfig';
 
 export const asistenciaApi = {
   registrar: async (memberId) => {

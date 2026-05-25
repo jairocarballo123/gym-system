@@ -129,8 +129,8 @@ const PORT = process.env.PORT || 3000;
 
     
       
-            cron.schedule('0 0 * * *', async () => {
-                console.log(' Ejecutando actualización automática de membresías vencidas...');
+            cron.schedule('* * * * *', async () => {
+                console.log(' Ejecutando actualización  de membresías vencidas...');
                 try {
                     await CronService.actualizarVencidos();
                     console.log(' Actualización completada');
