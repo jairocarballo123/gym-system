@@ -40,9 +40,9 @@ const FormularioPago = ({
           required
         >
           <option value="">Selecciona...</option>
-          <option value="1">💵 Efectivo</option>
-          <option value="2">💳 Tarjeta de crédito/débito</option>
-          <option value="3">🏦 Transferencia bancaria</option>
+          <option value="1"> Efectivo</option>
+          <option value="2"> Tarjeta de crédito/débito</option>
+          <option value="3"> Transferencia bancaria</option>
         </Form.Select>
       </Form.Group>
 

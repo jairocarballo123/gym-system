@@ -8,7 +8,8 @@ const cron = require('node-cron');
 require('dotenv').config();
 
 const { getConnection } = require('./config/db');
-const CronService = require('./services/cronServices'); 
+const CronService = require('./services/cronServices');
+const EmpleadoService = require('./services/EmpleadoServices'); // ◄ Ajustado según tu ruta actual
 
 const app = express();
 
@@ -16,7 +17,7 @@ const app = express();
 // MANEJADORES DE ERRORES GLOBALES
 // ============================================
 process.on('uncaughtException', (err) => {
-    console.error(' Error no capturado:', err);
+    console.error('Error no capturado:', err);
     process.exit(1);
 });
 
@@ -35,7 +36,7 @@ app.use(helmet());
 // ============================================
 const corsOptions = {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PUT','PATCH','DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 };
@@ -117,6 +118,84 @@ app.use((err, req, res, next) => {
 });
 
 // ============================================
+// FUNCIÓN SEMILLA: CREACIÓN DE CATÁLOGOS Y USUARIO INICIAL
+// ============================================
+async function verificarYCrearAdminInicial(pool) {
+    try {
+        console.log('[Semilla] Iniciando verificacion de catalogos indispensables...');
+
+        // 1. Verificar e insertar Estados
+        const checkStatuses = await pool.request().query('SELECT COUNT(*) AS total FROM GYM_CATALOGS.Tbl_Statuses');
+        if (checkStatuses.recordset[0].total === 0) {
+            console.log('[Semilla] Insertando Estados obligatorios...');
+            await pool.request().query(`
+                INSERT INTO GYM_CATALOGS.Tbl_Statuses (StatusName)
+                VALUES ('Activo'), ('Inactivo');
+            `);
+            console.log('[Semilla] Estados configurados con exito.');
+        }
+
+        // 2. Verificar e insertar Monedas
+        const checkCurrencies = await pool.request().query('SELECT COUNT(*) AS total FROM GYM_CATALOGS.Tbl_Currencies');
+        if (checkCurrencies.recordset[0].total === 0) {
+            console.log('[Semilla] Insertando Monedas obligatorias...');
+            await pool.request().query(`
+                INSERT INTO GYM_CATALOGS.Tbl_Currencies (CurrencyCode, CurrencyName)
+                VALUES ('NIO', 'Cordobas'), ('USD', 'Dolares');
+            `);
+            console.log('[Semilla] Monedas configuradas con exito.');
+        }
+
+        // 3. Verificar e insertar Métodos de Pago
+        const checkPayments = await pool.request().query('SELECT COUNT(*) AS total FROM GYM_CATALOGS.Tbl_PaymentMethods');
+        if (checkPayments.recordset[0].total === 0) {
+            console.log('[Semilla] Insertando Metodos de Pago obligatorios...');
+            await pool.request().query(`
+                INSERT INTO GYM_CATALOGS.Tbl_PaymentMethods (MethodName)
+                VALUES ('Efectivo'), ('Tarjeta'), ('Transferencia');
+            `);
+            console.log('[Semilla] Metodos de Pago configurados con exito.');
+        }
+
+        // 4. Verificar e insertar Roles de Seguridad
+        const checkRoles = await pool.request().query('SELECT COUNT(*) AS total FROM GYM_SECURITY.Tbl_Roles');
+        if (checkRoles.recordset[0].total === 0) {
+            console.log('[Semilla] Insertando Roles del Sistema...');
+            await pool.request().query(`
+                INSERT INTO GYM_SECURITY.Tbl_Roles (RoleName)
+                VALUES ('Administrador'), ('Entrenador'), ('Recepcionista');
+            `);
+            console.log('[Semilla] Roles configurados con exito.');
+        }
+
+        // 5. Verificar e insertar Administrador Inicial
+        const resultado = await pool.request().query('SELECT COUNT(*) AS total FROM GYM_HR.Tbl_Employees');
+        const cantidadEmpleados = resultado.recordset[0].total;
+
+        if (cantidadEmpleados === 0) {
+            console.log('[Semilla] Base de datos limpia detectada. Creando Administrador Inicial...');
+
+            const datosAdminInicial = {
+                nombre: 'Usuario Admin',
+                telefono: '00000000',
+                roleId: 1,
+                statusId: 1,
+                password: process.env.INITIAL_ADMIN_PASSWORD || 'Admin123!',
+                specialty: '',    
+                availability: ''   
+            };
+
+            const adminCreado = await EmpleadoService.crearEmpleado(datosAdminInicial);
+            console.log(`[Semilla] Administrador creado de forma segura con ID: ${adminCreado.id}`);
+        } else {
+            console.log('[Semilla] La tabla ya tiene registros. Omitiendo usuario inicial.');
+        }
+    } catch (error) {
+        console.error('[Semilla] Error critico en la inicializacion automatica:', error.message);
+    }
+}
+
+// ============================================
 // INICIAR SERVIDOR (CON CONEXIÓN A BD)
 // ============================================
 const PORT = process.env.PORT || 3000;
@@ -125,28 +204,29 @@ const PORT = process.env.PORT || 3000;
     try {
         const pool = await getConnection();
         if (pool) {
-            console.log(' Conexión establecida a SQL Server');
+            console.log('Conexion establecida a SQL Server');
 
-    
-      
+            // Ejecución segura de nuestra semilla completa
+            await verificarYCrearAdminInicial(pool);
+
             cron.schedule('* * * * *', async () => {
-                console.log(' Ejecutando actualización  de membresías vencidas...');
+                console.log('Ejecutando actualizacion de membresias vencidas...');
                 try {
                     await CronService.actualizarVencidos();
-                    console.log(' Actualización completada');
+                    console.log('Actualizacion completada');
                 } catch (error) {
-                    console.error('Error en actualización automática:', error.message);
+                    console.error('Error en actualizacion automatica:', error.message);
                 }
             });
 
             app.listen(PORT, () => {
-                console.log(` Servidor corriendo en puerto ${PORT}`);
-                console.log(` Entorno: ${process.env.NODE_ENV || 'development'}`);
-                console.log(` CORS permitido para: ${corsOptions.origin}`);
+                console.log(`Servidor corriendo en puerto ${PORT}`);
+                console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
+                console.log(`CORS permitido para: ${corsOptions.origin}`);
             });
         }
     } catch (err) {
-        console.error(' Error al conectar a SQL Server:', err);
+        console.error('Error al conectar a SQL Server:', err);
         process.exit(1);
     }
 })();

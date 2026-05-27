@@ -1,5 +1,5 @@
 // controllers/PagoController.js
-const PagoService = require('../services/pagoServices');
+const PagoService = require('../services/PagoServices');
 
 const PagoController = {
   // ============================================

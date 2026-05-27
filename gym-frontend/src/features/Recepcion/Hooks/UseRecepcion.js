@@ -14,13 +14,27 @@ export const useRecepcion = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // ========== AGREGAR ITEM CORREGIDO ==========
   const agregarItem = (item, tipo) => {
     const id = tipo === 'PLAN' ? item.PlanId : item.id;
     const nombre = tipo === 'PLAN' ? item.PlanName : item.nombre;
     const precio = tipo === 'PLAN' ? item.Price : item.precio;
 
+    // 1. Validar si el artículo con el mismo ID y Tipo ya existe en el carrito
+    const yaExiste = carrito.some(i => i.id === id && i.tipo === tipo);
+
+    // 2. Si ya existe, bloqueamos la inserción y avisamos al usuario
+    if (yaExiste) {
+      toast.error('Este artículo ya está en el carrito. Modificá la cantidad desde ahí.');
+      return;
+    }
+
+    // 3. Si no existe, se agrega normalmente con cantidad 1
     const nuevoItem = {
-      id, tipo, nombre, precio,
+      id, 
+      tipo, 
+      nombre, 
+      precio,
       cantidad: 1,
       subtotal: precio,
     };
@@ -54,24 +68,22 @@ export const useRecepcion = () => {
     setError(null);
   };
 
-
-
-const crearSocio = async (data) => {
-  setLoading(true);
-  setError(null);
-  try {
-    const response = await miembroServices.create(data);  // ← Usar create normal
-    toast.success('Socio registrado correctamente');
-    return response.data;
-  } catch (err) {
-    const msg = err.response?.data?.message || 'Error al registrar socio';
-    setError(msg);
-    toast.error(msg);
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-};
+  const crearSocio = async (data) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await miembroServices.create(data);  // ← Usar create normal
+      toast.success('Socio registrado correctamente');
+      return response.data;
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Error al registrar socio';
+      setError(msg);
+      toast.error(msg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ========== Registrar venta ==========
   const registrarVenta = async (cashierId) => {
@@ -85,10 +97,6 @@ const crearSocio = async (data) => {
       setError('Selecciona un método de pago.');
       return false;
     }
-    // if (montoPagado < total) {
-    //   setError(`El monto pagado (${montoPagado}) es menor al total (${total}).`);
-    //   return false;
-    // }
 
     const detalles = carrito.map(item => ({
       itemType: item.tipo,

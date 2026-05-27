@@ -14,9 +14,9 @@ const authRoutes = require('./authRoutes');
 const EmpleadorRoutes = require('./EmpleadorRoutes');
 const miembrosRoutes = require('./MiembroRoutes');
 const planesRoutes = require('./PlanRoutes');
-const pagosRoutes = require('../routes/PagoRoutes');
-const productosRoutes = require ('../routes/productoRoutes')
-const cron = require("../routes/cronRoutes")
+const pagosRoutes = require('./PagoRoutes');
+const productosRoutes = require ('./ProductoRoutes')
+const cron = require("./cronRoutes")
 const asistencia = require('./AsistenciaRoutes');
 const dashboard = require('./DashboardRoutes')
 

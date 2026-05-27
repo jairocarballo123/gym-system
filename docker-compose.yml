@@ -4,10 +4,10 @@ services:
     container_name: gym_sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "123"
+      SA_PASSWORD: "Gym.Enterprise.2026!"
       MSSQL_PID: "Express"
     ports:
-      - "1433:1433"
+      - "1434:1433"
     volumes:
       - sql_data:/var/opt/mssql
     networks:
@@ -15,14 +15,14 @@ services:
     restart: unless-stopped
 
   backend:
-    build: ./Backend             
+    build: ./Backend            
     container_name: gym_backend
     environment:
       - DB_SERVER=sqlserver
       - DB_USER=sa
-      - DB_PASSWORD=YourStrong!Password123
+      - DB_PASSWORD=Gym.Enterprise.2026!
       - DB_DATABASE=DB_GYM_ENTERPRISE
-      - JWT_SECRET=tu_secreto_super_seguro
+      - JWT_SECRET=super_clave_secreta_gym_backend
       - JWT_EXPIRES_IN=8h
       - FRONTEND_URL=http://localhost
       - NODE_ENV=production
